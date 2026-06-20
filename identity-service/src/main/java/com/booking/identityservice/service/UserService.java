@@ -14,6 +14,8 @@ public interface UserService {
 
     User update(UserUpdateRequest userUpdateRequest);
 
+    void delete(String id);
+
     ApiResponse<UserCreationResponse> getAll();
 
 

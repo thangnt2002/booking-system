@@ -10,4 +10,6 @@ public class Constant {
 
     // topic
     public static final String TOPIC_USER_OB = "user-ob-topic";
+    public static final String TOPIC_CREATE_PROFILE = "user-profile-create-topic";
+    public static final String TOPIC_ACCOUNT_REVERT= "account-revert-topic";
 }

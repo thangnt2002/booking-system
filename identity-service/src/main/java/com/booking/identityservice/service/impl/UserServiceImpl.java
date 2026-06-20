@@ -1,7 +1,6 @@
 package com.booking.identityservice.service.impl;
 
 import com.booking.identityservice.common.PredefinedRole;
-import com.booking.identityservice.event.NotificationEvent;
 import com.booking.identityservice.dto.ApiResponse;
 import com.booking.identityservice.dto.request.UserCreationRequest;
 import com.booking.identityservice.dto.request.UserProfileCreationRequest;
@@ -12,7 +11,6 @@ import com.booking.identityservice.entity.User;
 import com.booking.identityservice.exception.BusinessException;
 import com.booking.identityservice.exception.ErrorCode;
 import com.booking.identityservice.exception.NotFoundException;
-import com.booking.identityservice.kafka.NotificationProducer;
 import com.booking.identityservice.mapper.UserMapper;
 import com.booking.identityservice.mapper.UserProfileMapper;
 import com.booking.identityservice.repository.RoleRepository;
@@ -24,10 +22,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -45,9 +43,9 @@ public class UserServiceImpl implements UserService {
      RoleRepository roleRepository;
      ProfileClient profileClient;
      UserProfileMapper userProfileMapper;
-     NotificationProducer notificationProducer;
 
     @Override
+    @Transactional(rollbackFor = {Exception.class})
     public User create(UserCreationRequest userCreationRequest) {
         User user = userMapper.toUser(userCreationRequest);
         Set<Role> roles = new HashSet<>();
@@ -62,14 +60,6 @@ public class UserServiceImpl implements UserService {
         UserProfileCreationRequest userProfileRequest = userProfileMapper.toUserProfileRequest(userCreationRequest);
         userProfileRequest.setUserId(user.getId());
         profileClient.createUserProfile(userProfileRequest);
-        NotificationEvent notificationEvent = NotificationEvent
-                .builder()
-                .subject("Subject")
-                .channel("EMAIL")
-                .recipient(userCreationRequest.getEmail())
-                .body("Body for test")
-                .build();
-        notificationProducer.sendNotification(notificationEvent);
         return user;
     }
 
@@ -90,6 +80,14 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(new HashSet<>(roles));
         return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void delete(String id) {
+        if(userRepository.existsById(id)){
+            userRepository.deleteById(id);
+        }
     }
 
     @PreAuthorize("hasRole('ADMIN')")
