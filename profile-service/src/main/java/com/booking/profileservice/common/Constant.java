@@ -7,4 +7,9 @@ public class Constant {
     public static final String SERVER_ERROR = "Server error";
     public static final String UN_AUTHORIZE = "Un authorize";
     public static final String INVALID_DOB = "Must be > {min}";
+
+    // topics
+    public static final String TOPIC_USER_OB = "user-ob-topic";
+    public static final String TOPIC_CREATE_PROFILE = "user-profile-create-topic";
+    public static final String TOPIC_ACCOUNT_REVERT= "account-revert-topic";
 }
