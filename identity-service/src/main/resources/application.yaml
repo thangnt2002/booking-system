@@ -5,11 +5,19 @@ server:
 
 
 spring:
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=identity-service;encrypt=true;trustServerCertificate=true;
     username: sa
     password: Thmt20021001.
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
   jpa:
     show-sql: true
     hibernate:
@@ -17,12 +25,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
-
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 jwt:
   signerkey: 5517010be55559740935ff533f504ec82054e3b73df043a3a141578470ff13bc;

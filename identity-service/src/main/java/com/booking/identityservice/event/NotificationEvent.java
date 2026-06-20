@@ -1,4 +1,4 @@
-package com.booking.event;
+package com.booking.identityservice.event;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,7 +10,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EventMsg {
+public class NotificationEvent {
     String channel;
     String recipient;
     String subject;
