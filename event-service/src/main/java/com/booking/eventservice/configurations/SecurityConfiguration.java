@@ -1,6 +1,5 @@
 package com.booking.eventservice.configurations;
 
-import com.booking.eventservice.configurations.JWTAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +20,7 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    private String[] PUBLIC_ENDPOINT = {};
+    private final String[] PUBLIC_ENDPOINT = {"/events/create", "/events/{id}"};
 
     @Autowired
     private CustomJWTDecoder customJWTDecoder;
@@ -31,7 +30,11 @@ public class SecurityConfiguration {
         //security for api endpoint
         http.authorizeHttpRequests(request ->
                 request.requestMatchers(
-                        HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
+                        HttpMethod.GET, PUBLIC_ENDPOINT).permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
+                        .requestMatchers(
+                                HttpMethod.PUT, PUBLIC_ENDPOINT).permitAll()
                         .anyRequest().authenticated()
                 );
 

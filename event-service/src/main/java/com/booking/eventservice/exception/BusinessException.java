@@ -10,5 +10,5 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BusinessException extends RuntimeException{
-    private int code;
+    private ErrorCode code;
 }

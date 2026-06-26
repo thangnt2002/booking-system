@@ -23,7 +23,7 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     String name;
 
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
@@ -35,7 +35,7 @@ public class Event {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String location;
 
     @Column(nullable = false)

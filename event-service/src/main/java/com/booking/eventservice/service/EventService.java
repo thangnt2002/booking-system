@@ -1,15 +1,19 @@
 package com.booking.eventservice.service;
 
-import com.booking.eventservice.dto.request.TicketRequestDTO;
-import com.booking.eventservice.entity.Ticket;
+import com.booking.eventservice.dto.request.EventRequestDTO;
+import com.booking.eventservice.dto.response.EventResponseDTO;
+import com.booking.eventservice.entity.Event;
 
 public interface EventService {
 
-    Ticket create(TicketRequestDTO request);
+    Event create (EventRequestDTO event);
 
-    Ticket findById(String ticketId);
+    Event findById (String id, Long version);
 
-    Ticket update(TicketRequestDTO request);
+    Event update (String id, EventRequestDTO event);
 
-    Ticket softDelete(String ticketId);
+    Event softDelete (String id);
+
+    EventResponseDTO findEventById(String id, Long version);
+
 }
