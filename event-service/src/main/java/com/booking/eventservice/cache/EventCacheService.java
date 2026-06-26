@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.booking.eventservice.common.Utils.*;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -46,28 +48,28 @@ public class EventCacheService {
     }
 
     EventCache getEventFromLocalCache(String eventId) {
-        return eventLocalCache.getIfPresent(genEventLocalCacheKey(eventId));
+        return eventLocalCache.getIfPresent(genEventLocalCacheKey(Event.class ,eventId));
     }
 
     EventCache getEventFromDistributedCache(String eventId) {
-        EventCache eventCache = redisInfraService.getObject(genEventDistributedCacheKey(eventId), EventCache.class);
+        EventCache eventCache = redisInfraService.getObject(genEventDistributedCacheKey(Event.class, eventId), EventCache.class);
         if (eventCache == null) {
             log.info("NOT FOUND EVENT {} IN REDIS", eventId);
             eventCache = getEventDB(eventId);
         }
-        eventLocalCache.put(genEventLocalCacheKey(eventId), eventCache);
+        eventLocalCache.put(genEventLocalCacheKey(Event.class, eventId), eventCache);
         return eventCache;
 
     }
 
     EventCache getEventDB(String eventId) {
-        RedisDistributedLocker locker = redisDistributedService.getDistributedLock(genEventLockKey(eventId));
+        RedisDistributedLocker locker = redisDistributedService.getDistributedLock(genEventLockKey(Event.class, eventId));
         try {
             boolean isLock = locker.tryLock(1, 5, TimeUnit.SECONDS);
             if(!isLock){
                 return null;
             }
-            EventCache eventCache = redisInfraService.getObject(genEventDistributedCacheKey(eventId), EventCache.class);
+            EventCache eventCache = redisInfraService.getObject(genEventDistributedCacheKey(Event.class, eventId), EventCache.class);
             if(eventCache != null){
                 return eventCache;
             }
@@ -78,7 +80,7 @@ public class EventCacheService {
             }
             eventCache = new EventCache().withClone(event).withVersion(System.currentTimeMillis());
             log.info("SET REDIS FOR {} EVENT", eventId);
-            redisInfraService.setObject(genEventDistributedCacheKey(eventId), eventCache);
+            redisInfraService.setObject(genEventDistributedCacheKey(Event.class, eventId), eventCache);
             return eventCache;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -88,16 +90,11 @@ public class EventCacheService {
 
     }
 
-    String genEventLockKey(String eventId) {
-        return "LOCK_KEY_EVENT_" + eventId;
+    public void invalidateEvent(String eventId){
+        eventLocalCache.invalidate(eventId);
+        redisInfraService.delete(genEventDistributedCacheKey(Event.class, eventId));
     }
 
-    String genEventLocalCacheKey(String id) {
-        return "LOCAL_CACHE_EVENT :" + id;
-    }
 
-    String genEventDistributedCacheKey(String id) {
-        return "DISTRIBUTEED_CACHE_EVENT :" + id;
-    }
 
 }

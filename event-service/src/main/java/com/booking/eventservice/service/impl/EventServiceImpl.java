@@ -15,6 +15,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +30,7 @@ public class EventServiceImpl implements EventService {
 
 
     @Override
+    @Transactional
     public Event create(EventRequestDTO request) {
         if (request.getStartTime() != null && request.getEndTime() != null) {
             if (request.getStartTime().isAfter(request.getEndTime())) {
@@ -61,8 +63,17 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event update(String id, EventRequestDTO event) {
-        return null;
+    @Transactional
+    public Event update(String id, EventRequestDTO requestDTO) {
+        eventRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
+
+        Event updateEvent = eventMapper.toEntity(requestDTO);
+        updateEvent.setId(id);
+        eventRepository.save(updateEvent);
+        eventCacheService.invalidateEvent(id);
+        //TODO invalidate in other instances
+        return updateEvent;
     }
 
     @Override

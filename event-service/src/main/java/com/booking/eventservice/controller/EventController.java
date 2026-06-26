@@ -36,7 +36,7 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<ApiResponse<EventResponseDTO>> finById(@PathVariable("id") String id,
+    ResponseEntity<ApiResponse<EventResponseDTO>> findById(@PathVariable("id") String id,
         @RequestParam(name = "version", required = false) Long version
     ){
         EventResponseDTO dto = eventService.findEventById(id, version);
@@ -45,7 +45,21 @@ public class EventController {
                 .code(201)
                 .data(dto)
                 .build();
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PutMapping("/{id}")
+    ResponseEntity<ApiResponse<EventResponseDTO>> update(@PathVariable("id") String id,
+                                                         @RequestBody EventRequestDTO eventRequestDTO
+    ){
+        Event event = eventService.update(id, eventRequestDTO);
+        EventResponseDTO dto = eventMapper.toResponse(event);
+        ApiResponse<EventResponseDTO> response = ApiResponse.<EventResponseDTO>builder()
+                .success(true)
+                .code(200)
+                .data(dto)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 }

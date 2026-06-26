@@ -49,6 +49,12 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql
 
+  redis:
+    container_name: redis
+    image: redis:8.2
+    ports:
+      - "6319:6379"
+
 #networks:
 #  identity-network:
 #    driver: bridge
