@@ -65,15 +65,14 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public Event update(String id, EventRequestDTO requestDTO) {
-        eventRepository.findById(id)
+        Event existingEvent = eventRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
 
-        Event updateEvent = eventMapper.toEntity(requestDTO);
-        updateEvent.setId(id);
-        eventRepository.save(updateEvent);
+        eventMapper.updateEntity(requestDTO, existingEvent);
+        existingEvent.setUpdatedAt(LocalDateTime.now());
         eventCacheService.invalidateEvent(id);
         //TODO invalidate in other instances
-        return updateEvent;
+        return existingEvent;
     }
 
     @Override

@@ -26,7 +26,7 @@ public class Event {
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     String name;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description", columnDefinition = "NVARCHAR(255)")
     private String description;
 
     @Column(name = "start_time", nullable = false)
@@ -42,7 +42,7 @@ public class Event {
     private String poster;
 
     @Column(name = "deleted", columnDefinition = "BIT DEFAULT 0", nullable = false)
-    private boolean isDeleted;
+    private boolean deleted;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;

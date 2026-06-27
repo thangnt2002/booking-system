@@ -1,8 +1,6 @@
 package com.booking.eventservice.distributed.impl;
 
 import com.booking.eventservice.distributed.RedisInfraService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -10,8 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.util.Map;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @Slf4j
@@ -19,10 +16,11 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RedisInfraServiceImpl implements RedisInfraService {
 
-    RedisTemplate<String, Object> redisTemplate;
+    RedisTemplate<Object, Object> redisTemplate;
+    ObjectMapper objectMapper;
 
     @Override
-    public RedisTemplate<String, Object> getRedisTemplate() {
+    public RedisTemplate<Object, Object> getRedisTemplate() {
         return redisTemplate;
     }
 
@@ -33,7 +31,8 @@ public class RedisInfraServiceImpl implements RedisInfraService {
             return;
         }
         try{
-            redisTemplate.opsForValue().set(key, value);
+            String jsonValue = objectMapper.writeValueAsString(value);
+            redisTemplate.opsForValue().set(key, jsonValue);
         } catch (Exception e){
             log.error("set object err: key = {}, err = {}", key, e.getMessage());
         }
@@ -41,35 +40,21 @@ public class RedisInfraServiceImpl implements RedisInfraService {
 
     @Override
     public <T> T getObject(String key, Class<T> targetClass) {
-        Object result = redisTemplate.opsForValue().get(key);
-        switch (result) {
-            case null -> {
-                return null;
-            }
-            case Map map -> {
-                try {
-
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    return objectMapper.convertValue(result, targetClass);
-                } catch (IllegalArgumentException e) {
-                    log.error("Error converting LinkedHashMap to object: {} for key: {}", e.getMessage(), key);
-                    return null;
-                }
-            }
-            case String s -> {
-                try {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    return objectMapper.readValue(s, targetClass);
-                } catch (JsonProcessingException e) {
-                    log.error("Error converting String to object: {} for key: {}", e.getMessage(), key);
-                    return null;
-                }
-            }
-            default -> {
-            }
+        Object jsonValue = redisTemplate.opsForValue().get(key);
+        if(jsonValue == null){
+            return null;
         }
-
-        return null;
+        log.info("Type={}", jsonValue.getClass());
+        log.info("Value={}", jsonValue);
+        try {
+            return objectMapper.readValue(jsonValue.toString(), targetClass);
+        } catch (IllegalArgumentException e) {
+            log.error("Error converting to object: {} for key: {}", e.getMessage(), key);
+            return null;
+        } catch (Exception e){
+            log.error("Error server for object: {} for key: {}", e, key);
+            return null;
+        }
     }
 
     @Override

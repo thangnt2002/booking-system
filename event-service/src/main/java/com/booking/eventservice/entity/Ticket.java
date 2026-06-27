@@ -55,7 +55,7 @@ public class Ticket {
     private LocalDateTime saleEndTime;
 
     @Column(name = "deleted", columnDefinition = "BIT DEFAULT 0", nullable = false)
-    private boolean isDeleted;
+    private boolean deleted;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
