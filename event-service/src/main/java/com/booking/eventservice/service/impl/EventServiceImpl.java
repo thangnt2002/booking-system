@@ -7,7 +7,6 @@ import com.booking.eventservice.dto.response.EventResponseDTO;
 import com.booking.eventservice.entity.Event;
 import com.booking.eventservice.exception.BusinessException;
 import com.booking.eventservice.exception.ErrorCode;
-import com.booking.eventservice.exception.NotFoundException;
 import com.booking.eventservice.mapper.EventMapper;
 import com.booking.eventservice.repository.EventRepository;
 import com.booking.eventservice.service.EventService;
@@ -34,12 +33,12 @@ public class EventServiceImpl implements EventService {
     public Event create(EventRequestDTO request) {
         if (request.getStartTime() != null && request.getEndTime() != null) {
             if (request.getStartTime().isAfter(request.getEndTime())) {
-                throw new BusinessException(ErrorCode.INVALID_EVENT_START_TIME);
+                throw new BusinessException(ErrorCode.INVALID_START_TIME);
             }
         }
         LocalDateTime now = LocalDateTime.now();
         if (request.getStartTime() != null && request.getStartTime().isBefore(now)) {
-            throw new BusinessException(ErrorCode.EVENT_TIME_CANNOT_BE_IN_THE_PAST);
+            throw new BusinessException(ErrorCode.START_TIME_CANNOT_BE_IN_THE_PAST);
         }
 
         Event event = eventMapper.toEntity(request);
@@ -71,7 +70,7 @@ public class EventServiceImpl implements EventService {
         eventMapper.updateEntity(requestDTO, existingEvent);
         existingEvent.setUpdatedAt(LocalDateTime.now());
         eventCacheService.invalidateEvent(id);
-        //TODO invalidate in other instances
+        eventCacheService.buildCache(existingEvent);
         return existingEvent;
     }
 
