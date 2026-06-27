@@ -4,7 +4,7 @@ import com.booking.eventservice.entity.Ticket;
 import lombok.Data;
 
 @Data
-public class TicketCache {
+public class TicketCache extends BaseCache{
     private Long version;
     private Ticket ticket;
 
