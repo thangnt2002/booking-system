@@ -12,8 +12,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import static com.booking.eventservice.common.Utils.genDistributedTicketStockAvailableKey;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import static com.booking.eventservice.common.Utils.*;
 
@@ -103,5 +106,35 @@ public class TicketCacheService {
             locker.unlock();
         }
     }
+
+
+    public int decreaseStock(String ticketId, int quantity) {
+        String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
+        String luaScript = "local stock = redis.call('GET', [KEYS]);" +
+                "if stock == false then return -1 end; " +
+                "stock = tonumber(stock); " +
+                "if (stock >= tonumber(ARGV[1])) then " +
+                "   redis.call('SET', KEYS[1], stock - tonumber(ARGV[1]));" +
+                "   return 1;" +
+                "end;" +
+                "return 0";
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(luaScript, Long.class);
+        Long result = redisInfraService.getRedisTemplate().execute(redisScript, Collections.singletonList(stockAvailableCacheKey), quantity);
+        return result != null ? result.intValue() : 0;
+    }
+
+    public int increaseStock(String ticketId, int quantity) {
+        String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
+        String luaScript = "local stock = redis.call('GET', [KEYS]); " +
+                "if (stock) then " +
+                " redis.call('SET', KEY[1], stock + tonumber(ARGV[1]));" +
+                " return 1;" +
+                "end;" +
+                "return 0";
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(luaScript, Long.class);
+        Long result = redisInfraService.getRedisTemplate().execute(redisScript, Collections.singletonList(stockAvailableCacheKey), quantity);
+        return result != null ? result.intValue() : 0;
+    }
+
 
 }

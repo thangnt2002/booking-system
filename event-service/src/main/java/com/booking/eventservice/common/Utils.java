@@ -16,6 +16,10 @@ public class Utils {
         String className = type.getSimpleName();
         return String.format("DISTRIBUTED_CACHE_%s_%s", className, id);
     }
+
+    public static String genDistributedTicketStockAvailableKey(String ticketId){
+        return String.format("DISTRIBUTED_%s_STOCK_AVAILABLE", ticketId);
+    }
 }
 
 

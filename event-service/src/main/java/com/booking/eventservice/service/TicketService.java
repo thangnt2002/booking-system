@@ -15,4 +15,6 @@ public interface TicketService {
     Ticket softDelete(String ticketId);
 
     TicketResponseDTO findTicketById(String ticketId, Long version);
+
+    boolean order(String ticketId, int quantity);
 }

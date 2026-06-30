@@ -22,45 +22,48 @@ public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    String id;
 
-    private String eventId;
-
-    @Enumerated(EnumType.STRING)
-    private TicketStatus status;
+    String eventId;
 
     @Enumerated(EnumType.STRING)
-    private TicketType type;
+    TicketStatus status;
+
+    @Enumerated(EnumType.STRING)
+    TicketType type;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "selling_type", nullable = false)
-    private SellingType sellingType;
+    SellingType sellingType;
 
-    @Column(name = "flash_initial", nullable = false)
-    private Integer stockInitial;
+    @Column(name = "stock_initial", nullable = false)
+    Integer stockInitial;
 
     @Column(name = "stock_available", nullable = false)
-    private Integer stockAvailable;
+    Integer stockAvailable;
+
+    @Column(name = "reserved_stock", nullable = false)
+    Integer reservedStock;
 
     @Column(name = "original_price", precision = 18, scale = 2)
-    private BigDecimal originalPrice;
+    BigDecimal originalPrice;
 
     @Column(name = "flash_price", nullable = false, precision = 18, scale = 2)
-    private BigDecimal flashPrice;
+    BigDecimal flashPrice;
 
     @Column(name = "sale_start_time", nullable = false)
-    private LocalDateTime saleStartTime;
+    LocalDateTime saleStartTime;
 
     @Column(name = "sale_end_time", nullable = false)
-    private LocalDateTime saleEndTime;
+    LocalDateTime saleEndTime;
 
     @Column(name = "deleted", columnDefinition = "BIT DEFAULT 0", nullable = false)
-    private boolean deleted;
+    boolean deleted;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    LocalDateTime updatedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    LocalDateTime createdAt;
 
 }

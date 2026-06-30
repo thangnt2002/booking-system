@@ -49,4 +49,11 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @PostMapping("/order/{ticketId}/{quantity}")
+    public ResponseEntity<ApiResponse<Void>> order(@PathVariable("ticketId") String ticketId,
+                                                   @PathVariable("quantity") int quantity ){
+        ticketService.order(ticketId, quantity);
+        return ResponseEntity.ok(ApiResponse.<Void>builder().code(200).success(true).build());
+    }
+
 }

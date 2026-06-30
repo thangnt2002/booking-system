@@ -1,18 +1,22 @@
 package com.booking.eventservice.service.impl;
 
 import com.booking.eventservice.cache.TicketCacheService;
-import com.booking.eventservice.dto.cache.EventCache;
 import com.booking.eventservice.dto.cache.TicketCache;
 import com.booking.eventservice.dto.request.TicketRequestDTO;
 import com.booking.eventservice.dto.response.TicketResponseDTO;
+import com.booking.eventservice.entity.Order;
 import com.booking.eventservice.entity.Ticket;
+import com.booking.eventservice.enums.OrderStatus;
 import com.booking.eventservice.exception.BusinessException;
 import com.booking.eventservice.exception.ErrorCode;
 import com.booking.eventservice.exception.NotFoundException;
 import com.booking.eventservice.mapper.TicketMapper;
 import com.booking.eventservice.repository.EventRepository;
+import com.booking.eventservice.repository.TicketOrderRepository;
 import com.booking.eventservice.repository.TicketRepository;
 import com.booking.eventservice.service.TicketService;
+import jakarta.persistence.LockTimeoutException;
+import jakarta.persistence.PessimisticLockException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,7 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +37,7 @@ public class TicketServiceImpl implements TicketService {
 
     TicketRepository ticketRepository;
     EventRepository evenEventRepository;
+    TicketOrderRepository ticketOrderRepository;
     TicketMapper ticketMapper;
     TicketCacheService ticketCacheService;
 
@@ -46,7 +54,7 @@ public class TicketServiceImpl implements TicketService {
             throw new BusinessException(ErrorCode.START_TIME_CANNOT_BE_IN_THE_PAST);
         }
 
-        if(!evenEventRepository.existsById(request.getEventId())){
+        if (!evenEventRepository.existsById(request.getEventId())) {
             log.error("Event {} not found", request.getEventId());
             throw new NotFoundException(ErrorCode.DATA_NOT_FOUND);
         }
@@ -74,18 +82,95 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketResponseDTO findTicketById(String ticketId, Long version){
+    public TicketResponseDTO findTicketById(String ticketId, Long version) {
         TicketCache ticketCache = getTicketFromCache(ticketId, version);
         TicketResponseDTO dto = ticketMapper.toResponse(ticketCache.getTicket());
         dto.setVersion(ticketCache.getVersion());
         return dto;
     }
 
-    private TicketCache getTicketFromCache(String id, Long version){
-        if(id == null){
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean order(String ticketId, int quantity) {
+        boolean isRedisDecremented = false;
+        try {
+            int deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
+            if (deductionResult == -1) {
+                log.info("decrease stock: cache miss for ticketId={}", ticketId);
+                // TODO add stock available to cache
+                // decrease after add stock to cache
+                deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
+            }
+            if (deductionResult == 0) {
+                log.info("Redis stock insufficient for ticketId={}", ticketId);
+                return false;
+            }
+            isRedisDecremented = true;
+            // decrease in cache ok -> sync to db
+            boolean isDbDecremented = ticketRepository.decreaseStock(ticketId, quantity);
+
+            if (!isDbDecremented) {
+                ticketCacheService.increaseStock(ticketId, quantity);
+                log.info("DecreaseStock failed for ticketId={}, quantity = {}", ticketId, quantity);
+                return false;
+            }
+
+            // create order
+            BigDecimal price = getEffectivePrice(ticketId);
+            LocalDateTime now = LocalDateTime.now();
+            //TODO security context holders
+            String tempUserId = String.valueOf(UUID.randomUUID());
+            String orderNumber = String.format("BNB-HN-%s-%s-%s", tempUserId, ticketId, System.currentTimeMillis());
+            Order order = Order.builder()
+                    .customerId(tempUserId)
+                    .orderNumber(orderNumber)
+                    .status(OrderStatus.PENDING)
+                    .price(price)
+                    .quantity(quantity)
+                    .orderDate(now)
+                    .updatedAt(now)
+                    .createdAt(now)
+                    .build();
+
+            String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+            ticketOrderRepository.insertOrder(tableName, order);
+            log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
+            return true;
+        }catch (PessimisticLockException e) {
+            if(isRedisDecremented){
+                ticketCacheService.increaseStock(ticketId, quantity);
+            }
+            log.error("PessimisticLockException ticketId={}, quantity = {}", ticketId, quantity);
+            return false;
+        }catch(LockTimeoutException e){
+            if(isRedisDecremented){
+                ticketCacheService.increaseStock(ticketId, quantity);
+            }
+            log.error("LockTimeoutException ticketId={}, quantity = {}", ticketId, quantity);
+            return false;
+        } catch (Exception e) {
+            if(isRedisDecremented){
+                ticketCacheService.increaseStock(ticketId, quantity);
+            }
+            log.error("Exception ticketId={}, quantity = {}", ticketId, quantity);
+            return false;
+        }
+    }
+
+    private TicketCache getTicketFromCache(String id, Long version) {
+        if (id == null) {
             return null;
         }
         return ticketCacheService.getTicket(id, version);
+    }
+
+    private BigDecimal getEffectivePrice(String ticketId){
+        Ticket ticket = findById(ticketId, null);
+        if(ticket == null) return BigDecimal.valueOf(-1);
+        if(ticket.getFlashPrice() != null && ticket.getFlashPrice().compareTo(BigDecimal.valueOf(0)) > 0){
+            return ticket.getOriginalPrice();
+        }
+        return ticket.getOriginalPrice() != null ? ticket.getOriginalPrice() : BigDecimal.valueOf(-1);
     }
 
 }
