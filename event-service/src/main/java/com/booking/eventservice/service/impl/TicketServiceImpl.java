@@ -4,15 +4,12 @@ import com.booking.eventservice.cache.TicketCacheService;
 import com.booking.eventservice.dto.cache.TicketCache;
 import com.booking.eventservice.dto.request.TicketRequestDTO;
 import com.booking.eventservice.dto.response.TicketResponseDTO;
-import com.booking.eventservice.entity.Order;
 import com.booking.eventservice.entity.Ticket;
-import com.booking.eventservice.enums.OrderStatus;
 import com.booking.eventservice.exception.BusinessException;
 import com.booking.eventservice.exception.ErrorCode;
 import com.booking.eventservice.exception.NotFoundException;
 import com.booking.eventservice.mapper.TicketMapper;
 import com.booking.eventservice.repository.EventRepository;
-import com.booking.eventservice.repository.TicketOrderRepository;
 import com.booking.eventservice.repository.TicketRepository;
 import com.booking.eventservice.service.TicketService;
 import jakarta.persistence.LockTimeoutException;
@@ -24,10 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +31,6 @@ public class TicketServiceImpl implements TicketService {
 
     TicketRepository ticketRepository;
     EventRepository evenEventRepository;
-    TicketOrderRepository ticketOrderRepository;
     TicketMapper ticketMapper;
     TicketCacheService ticketCacheService;
 
@@ -90,8 +83,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean order(String ticketId, int quantity) {
+    public boolean decreaseStock(String ticketId, int quantity) {
         boolean isRedisDecremented = false;
         try {
             int deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
@@ -115,41 +107,22 @@ public class TicketServiceImpl implements TicketService {
                 return false;
             }
 
-            // create order
-            BigDecimal price = getEffectivePrice(ticketId);
-            LocalDateTime now = LocalDateTime.now();
-            //TODO security context holders
-            String tempUserId = String.valueOf(UUID.randomUUID());
-            String orderNumber = String.format("BNB-HN-%s-%s-%s", tempUserId, ticketId, System.currentTimeMillis());
-            Order order = Order.builder()
-                    .customerId(tempUserId)
-                    .orderNumber(orderNumber)
-                    .status(OrderStatus.PENDING)
-                    .price(price)
-                    .quantity(quantity)
-                    .orderDate(now)
-                    .updatedAt(now)
-                    .createdAt(now)
-                    .build();
-
-            String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
-            ticketOrderRepository.insertOrder(tableName, order);
             log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
             return true;
-        }catch (PessimisticLockException e) {
-            if(isRedisDecremented){
+        } catch (PessimisticLockException e) {
+            if (isRedisDecremented) {
                 ticketCacheService.increaseStock(ticketId, quantity);
             }
             log.error("PessimisticLockException ticketId={}, quantity = {}", ticketId, quantity);
             return false;
-        }catch(LockTimeoutException e){
-            if(isRedisDecremented){
+        } catch (LockTimeoutException e) {
+            if (isRedisDecremented) {
                 ticketCacheService.increaseStock(ticketId, quantity);
             }
             log.error("LockTimeoutException ticketId={}, quantity = {}", ticketId, quantity);
             return false;
         } catch (Exception e) {
-            if(isRedisDecremented){
+            if (isRedisDecremented) {
                 ticketCacheService.increaseStock(ticketId, quantity);
             }
             log.error("Exception ticketId={}, quantity = {}", ticketId, quantity);
@@ -162,15 +135,6 @@ public class TicketServiceImpl implements TicketService {
             return null;
         }
         return ticketCacheService.getTicket(id, version);
-    }
-
-    private BigDecimal getEffectivePrice(String ticketId){
-        Ticket ticket = findById(ticketId, null);
-        if(ticket == null) return BigDecimal.valueOf(-1);
-        if(ticket.getFlashPrice() != null && ticket.getFlashPrice().compareTo(BigDecimal.valueOf(0)) > 0){
-            return ticket.getOriginalPrice();
-        }
-        return ticket.getOriginalPrice() != null ? ticket.getOriginalPrice() : BigDecimal.valueOf(-1);
     }
 
 }

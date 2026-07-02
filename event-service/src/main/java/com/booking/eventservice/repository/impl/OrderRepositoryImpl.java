@@ -1,7 +1,8 @@
-package com.booking.eventservice.service.impl;
+package com.booking.eventservice.repository.impl;
 
 import com.booking.eventservice.entity.Order;
-import com.booking.eventservice.repository.TicketOrderRepository;
+import com.booking.eventservice.enums.OrderStatus;
+import com.booking.eventservice.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level =  AccessLevel.PRIVATE, makeFinal = true)
-public class TicketOrderRepositoryImpl implements TicketOrderRepository {
+public class OrderRepositoryImpl implements OrderRepository {
 
     EntityManager entityManager;
 
@@ -69,6 +72,39 @@ public class TicketOrderRepositoryImpl implements TicketOrderRepository {
     @Override
     public List<Object> findAll() {
         return List.of();
+    }
+
+    @Override
+    public Order findByOrderNumber(String yearMonth, String orderNumber) {
+        String sql = "SELECT * FROM " + createTableName(yearMonth) + " WHERE orderNumber = :orderNumber";
+        List<Object[]> result = entityManager.createNativeQuery(sql)
+                .setParameter("orderNumber", orderNumber)
+                .getResultList();
+        if(result.isEmpty()) return null;
+        Object[] row = result.getFirst();
+        return new Order(
+                (String) row[0],
+                (String) row[1],
+                (String) row[2],
+                (LocalDateTime) row[3],
+                (OrderStatus) row[4],
+                (String) row[5],
+                (Integer) row [6],
+                (BigDecimal) row [7],
+                (LocalDateTime) row[8],
+                (LocalDateTime) row[9]
+        );
+    }
+
+    @Override
+    public boolean changeStatus(String yearMonth, String orderNumber, OrderStatus status) {
+        String query = "UPDATE " + createTableName(yearMonth) + " o SET o.updated_at = CURRENT_TIMESTAMP " +
+                "o.status = :status WHERE o.order_number = :orderNumber";
+        int result = entityManager.createNativeQuery(query)
+                .setParameter("status", status)
+                .setParameter("orderNumber", orderNumber)
+                .executeUpdate();
+        return result > 0;
     }
 
     private String createTableName(String yearMonth){

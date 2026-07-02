@@ -17,4 +17,11 @@ public interface TicketRepository extends JpaRepository<Ticket, String> {
             "t.stockAvailable = t.stockAvailable - :quantity " +
             "WHERE t.id = :ticketId AND t.stockAvailable > :quantity ")
     boolean decreaseStock(@Param("ticketId") String ticketId, @Param("quantity") int quantity);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Ticket t SET t.updatedAt = CURRENT_TIMESTAMP," +
+            "t.stockAvailable = t.stockAvailable + :quantity " +
+            "WHERE t.id = :ticketId")
+    boolean restock(@Param("ticketId") String ticketId, @Param("quantity") int quantity);
 }

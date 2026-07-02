@@ -10,6 +10,8 @@ public class Constant {
     public static final String SEND_MAIL_FAILED = "Error when send email";
     public static final String INVALID_START_TIME = "Start time must be before end time";
     public static final String START_TIME_CANNOT_BE_IN_THE_PAST = "Start time cannot be in the past";
+    public static final String INVALID_TIME_FORMAT = "Start time cannot be in the past";
+    public static final String INVALID_TIME_LIMIT = "Invalid limit";
 
     public static final String CACHE_NULL = "__NULL__";
 }

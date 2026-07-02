@@ -123,7 +123,7 @@ public class TicketCacheService {
         return result != null ? result.intValue() : 0;
     }
 
-    public int increaseStock(String ticketId, int quantity) {
+    public boolean increaseStock(String ticketId, int quantity) {
         String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
         String luaScript = "local stock = redis.call('GET', [KEYS]); " +
                 "if (stock) then " +
@@ -133,7 +133,7 @@ public class TicketCacheService {
                 "return 0";
         DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(luaScript, Long.class);
         Long result = redisInfraService.getRedisTemplate().execute(redisScript, Collections.singletonList(stockAvailableCacheKey), quantity);
-        return result != null ? result.intValue() : 0;
+        return result != null && result.intValue() == 1;
     }
 
 
