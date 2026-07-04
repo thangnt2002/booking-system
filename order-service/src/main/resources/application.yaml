@@ -1,3 +1,33 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /order
+
 spring:
-  application:
-    name: order-service
+
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=order-service;encrypt=true;trustServerCertificate=true;
+    username: sa
+    password: Thmt20021001.
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+        spring.json.type.mapping: ticketRestockMsg:com.booking.orderservice.event.TicketRestockEvent
+
+app:
+  profile:
+    event: http://localhost:8084/event

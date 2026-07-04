@@ -1,6 +1,6 @@
 package com.booking.orderservice.exception;
 
-import com.booking.eventservice.common.Constant;
+import com.booking.orderservice.common.Constant;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;

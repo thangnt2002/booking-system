@@ -1,7 +1,6 @@
 package com.booking.orderservice.exception;
 
-import com.booking.eventservice.dto.ApiResponse;
-import com.booking.eventservice.exception.NotFoundException;
+import com.booking.orderservice.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -42,7 +41,7 @@ public class GlobalExceptionHandler {
                 .code(err.getCode())
                 .message(err.getMessage())
                 .build();
-        return ResponseEntity.status(err.getStatusCode()).body(apiResponse);
+        return ResponseEntity.status(ErrorCode.DATA_NOT_FOUND.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(value = BusinessException.class)

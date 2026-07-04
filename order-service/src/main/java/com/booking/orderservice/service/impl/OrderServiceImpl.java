@@ -3,16 +3,17 @@ package com.booking.orderservice.service.impl;
 
 import com.booking.orderservice.distributed.RedisDistributedLocker;
 import com.booking.orderservice.distributed.RedisDistributedService;
-import com.booking.orderservice.distributed.RedisInfraService;
+import com.booking.orderservice.dto.response.TicketResponseDTO;
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OrderStatus;
+import com.booking.orderservice.event.TicketRestockEvent;
 import com.booking.orderservice.exception.BusinessException;
 import com.booking.orderservice.exception.ErrorCode;
 import com.booking.orderservice.exception.NotFoundException;
+import com.booking.orderservice.kafka.producer.EventProducer;
 import com.booking.orderservice.repository.OrderRepository;
+import com.booking.orderservice.repository.http.EventClient;
 import com.booking.orderservice.service.OrderService;
-import jakarta.persistence.LockTimeoutException;
-import jakarta.persistence.PessimisticLockException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.booking.orderservice.common.Constant.TICKET_RESTOCK_TOPIC;
 import static com.booking.orderservice.common.Utils.genRequestLockKey;
 
 @Service
@@ -35,43 +37,46 @@ import static com.booking.orderservice.common.Utils.genRequestLockKey;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class OrderServiceImpl implements OrderService {
-//TODO SPLIT TO ORDER SERVICE
-
     OrderRepository orderRepository;
     RedisDistributedService redisDistributedService;
+    EventProducer eventProducer;
+    EventClient eventClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean order(String ticketId, int quantity) {
-        try{
-
-        //TODO call to ticket service to decrease stock internal/tickets/decrement/{ticketId}/{quantity}
-
-        // create order
-            // TODO Check ticket here
-        BigDecimal price = getEffectivePrice(ticketId);
-        LocalDateTime now = LocalDateTime.now();
-        //TODO get id from securityContextHolders
-        String tempUserId = String.valueOf(UUID.randomUUID());
-        String orderNumber = String.format("BNB-HN-%s-%s-%s", tempUserId, ticketId, System.currentTimeMillis());
-        Order order = Order.builder()
-                .customerId(tempUserId)
-                .orderNumber(orderNumber)
-                .status(OrderStatus.PENDING)
-                .price(price)
-                .quantity(quantity)
-                .orderDate(now)
-                .updatedAt(now)
-                .createdAt(now)
-                .build();
-        String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
-        orderRepository.insertOrder(tableName, order);
-        log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
+        try {
+            boolean isDecrement = eventClient.decreaseStock(ticketId, quantity).getData();
+            if(!isDecrement){
+                log.error("Decrease failed for ticket id {}", ticketId);
+                throw new BusinessException(ErrorCode.SERVER_ERROR);
+            }
+            // create order
+            BigDecimal price = getEffectivePrice(ticketId);
+            LocalDateTime now = LocalDateTime.now();
+            //TODO get id from securityContextHolders
+            String tempUserId = String.valueOf(UUID.randomUUID());
+            String orderNumber = String.format("BNB-HN-%s-%s-%s", tempUserId, ticketId, System.currentTimeMillis());
+            Order order = Order.builder()
+                    .customerId(tempUserId)
+                    .orderNumber(orderNumber)
+                    .status(OrderStatus.PENDING)
+                    .price(price)
+                    .quantity(quantity)
+                    .orderDate(now)
+                    .updatedAt(now)
+                    .createdAt(now)
+                    .build();
+            String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+            orderRepository.insertOrder(tableName, order);
+            log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
             return true;
         } catch (Exception e) {
-            // TODO call to ticket service to restock
-            log.error("Exception ticketId={}, quantity = {}", ticketId, quantity);
-            return false;
+            log.error("Decrease failed for ticket id {}, err: {}", ticketId, e.getMessage());
+            eventProducer.sendMsg(TICKET_RESTOCK_TOPIC, TicketRestockEvent.builder()
+                    .ticketId(ticketId)
+                    .quantity(quantity));
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
     }
 
@@ -110,22 +115,15 @@ public class OrderServiceImpl implements OrderService {
                 return false;
             }
 
-            // TODO call ticket service to increase stock in cache and db
-
-//            boolean restock = ticketRepository.restock(order.getTicketId(), order.getQuantity());
-//            if (!restock) {
-//                log.error("Restock in db failed for order {}, ticket = {}, quantity = {}", orderNumber, order.getTicketId(), order.getQuantity());
-//                return false;
-//            }
-//            boolean cacheRestock = ticketCacheService.increaseStock(order.getTicketId(), order.getQuantity());
-//            if (!cacheRestock) {
-//                log.error("Restock in cache failed for order {}, ticket = {}, quantity = {}", orderNumber, order.getTicketId(), order.getQuantity());
-//                return false;
-//            }
+            boolean isRestockSuccess = eventClient.increaseStock(order.getTicketId(), order.getQuantity()).getData();
+            if(!isRestockSuccess){
+                log.error("Restock failed, cancel failed for order {}", orderNumber);
+                throw new BusinessException(ErrorCode.SERVER_ERROR);
+            }
             log.info("Cancel order successfully!");
             return true;
         } catch (InterruptedException e) {
-            log.error("cancel order {} err {}", orderNumber, e.getMessage());
+            log.error("cancel order failed {} err {}", orderNumber, e.getMessage());
             throw new RuntimeException(e);
         } finally {
             locker.unlock();
@@ -149,6 +147,13 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-
+    private BigDecimal getEffectivePrice(String ticketId) {
+        TicketResponseDTO ticket = eventClient.findTicketById(ticketId).getData();
+        if (ticket == null) return BigDecimal.valueOf(-1);
+        if (ticket.getFlashPrice() != null && ticket.getFlashPrice().compareTo(BigDecimal.valueOf(0)) > 0) {
+            return ticket.getOriginalPrice();
+        }
+        return ticket.getOriginalPrice() != null ? ticket.getOriginalPrice() : BigDecimal.valueOf(-1);
+    }
 
 }

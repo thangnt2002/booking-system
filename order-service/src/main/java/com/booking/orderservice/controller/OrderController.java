@@ -22,7 +22,7 @@ public class OrderController {
 
     OrderService orderService;
 
-    @PostMapping("/ticketId}/{quantity}")
+    @PostMapping("/{ticketId}/{quantity}")
     public ResponseEntity<ApiResponse<Void>> order(@PathVariable("ticketId") String ticketId,
                                                    @PathVariable("quantity") int quantity ){
         orderService.order(ticketId, quantity);
