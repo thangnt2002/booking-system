@@ -17,4 +17,6 @@ public interface TicketService {
     TicketResponseDTO findTicketById(String ticketId, Long version);
 
     boolean decreaseStock(String ticketId, int quantity);
+
+    boolean increaseStock(String ticketId, int quantity);
 }

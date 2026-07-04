@@ -1,6 +1,7 @@
 package com.booking.eventservice.controller;
 
 import com.booking.eventservice.dto.ApiResponse;
+import com.booking.eventservice.dto.Page;
 import com.booking.eventservice.dto.request.EventRequestDTO;
 import com.booking.eventservice.dto.response.EventResponseDTO;
 import com.booking.eventservice.entity.Event;
@@ -60,6 +61,19 @@ public class EventController {
                 .success(true)
                 .code(200)
                 .data(dto)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+
+    @GetMapping("/page/{cursor}/{limit}")
+    public ResponseEntity<ApiResponse<Page<EventResponseDTO>>> getPage(@PathVariable("cursor") long cursor,
+                                                                       @PathVariable("limit") int limit ){
+        Page<EventResponseDTO> page = eventService.getPage(cursor, limit);
+        ApiResponse<Page<EventResponseDTO>> response = ApiResponse.<Page<EventResponseDTO>>builder()
+                .success(true)
+                .code(200)
+                .data(page)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

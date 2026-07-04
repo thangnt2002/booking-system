@@ -83,6 +83,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
     public boolean decreaseStock(String ticketId, int quantity) {
         boolean isRedisDecremented = false;
         try {
@@ -128,6 +129,11 @@ public class TicketServiceImpl implements TicketService {
             log.error("Exception ticketId={}, quantity = {}", ticketId, quantity);
             return false;
         }
+    }
+
+    @Override
+    public boolean increaseStock(String ticketId, int quantity) {
+        return ticketCacheService.increaseStock(ticketId, quantity);
     }
 
     private TicketCache getTicketFromCache(String id, Long version) {

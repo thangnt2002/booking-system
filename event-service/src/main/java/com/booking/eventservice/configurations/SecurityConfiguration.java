@@ -20,7 +20,13 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    private final String[] PUBLIC_ENDPOINT = {"/events/create", "/events/update/{id}", "/events/{id}", "/tickets/create", "/tickets/{id}"};
+    private final String[] PUBLIC_ENDPOINT = {"/events/create",
+            "/events/update/{id}",
+            "/events/{id}",
+            "/tickets/create",
+            "/tickets/{id}",
+            "/internal/**"
+    };
 
     @Autowired
     private CustomJWTDecoder customJWTDecoder;
