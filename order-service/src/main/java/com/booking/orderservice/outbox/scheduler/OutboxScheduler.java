@@ -11,8 +11,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -32,8 +30,7 @@ public class OutboxScheduler {
         publishRow();
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    protected void publishRow() {
+    private void publishRow() {
         List<OutboxMessage> pendingMessages = outboxService.findByStatus(OutboxStatus.PENDING);
         if (pendingMessages.isEmpty()) {
             return;
@@ -45,7 +42,6 @@ public class OutboxScheduler {
                 eventProducer.sendAndWaitAck(msg.getTopic(), msg.getId(), payload);
                 outboxService.markAsPublish(msg.getId());
             } catch (Exception e) {
-                //TODO add retry logic or manual handle
                 log.error("OutboxPublisher failed for msgId = {}, err = {}", msg.getId(), e.getMessage());
             }
         });

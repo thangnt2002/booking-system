@@ -27,13 +27,7 @@ public class OutboxServiceImpl implements OutboxService {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public OutboxMessage save(OutboxMessage outboxMessage) {
-        try {
-            return outboxRepository.save(outboxMessage);
-        } catch (Exception e) {
-            //noti for admin to manual handle
-            log.error("Failed to save to outbox for msg = {}", outboxMessage);
-            throw new BusinessException(ErrorCode.SERVER_ERROR);
-        }
+        return outboxRepository.save(outboxMessage);
     }
 
     @Override

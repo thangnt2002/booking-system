@@ -1,14 +1,15 @@
 package com.booking.orderservice.enums;
 
-import com.booking.orderservice.event.TicketRestockEvent;
+import com.booking.orderservice.entity.Order;
+import com.booking.orderservice.event.TicketStockEvent;
 import com.booking.orderservice.exception.BusinessException;
 import com.booking.orderservice.exception.ErrorCode;
 
 import java.util.Arrays;
 
 public enum AggregateTypeMap {
-    TICKET_RESTOCK("TicketRestockEvent", TicketRestockEvent.class),
-    ORDER_CREATED("OrderCreated", TicketRestockEvent.class);
+    TICKET_RESTOCK("TicketSockEvent", TicketStockEvent.class),
+    ORDER_CREATED("Order", Order.class);
 
     String type;
     Class<?> clazz;

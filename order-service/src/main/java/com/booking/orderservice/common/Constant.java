@@ -17,4 +17,6 @@ public class Constant {
 
     //topics
     public static final String TICKET_RESTOCK_TOPIC = "ticket-restock-topic";
+    public static final String TICKET_DECREASE_STOCK_TOPIC = "ticket-decrease-stock-topic";
+    public static final String PLACE_ORDER_TOPIC = "place-order-topic";
 }

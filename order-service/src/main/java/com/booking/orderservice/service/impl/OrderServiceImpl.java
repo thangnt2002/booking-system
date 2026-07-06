@@ -3,11 +3,10 @@ package com.booking.orderservice.service.impl;
 
 import com.booking.orderservice.distributed.RedisDistributedLocker;
 import com.booking.orderservice.distributed.RedisDistributedService;
-import com.booking.orderservice.dto.response.TicketResponseDTO;
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OrderStatus;
 import com.booking.orderservice.enums.OutboxStatus;
-import com.booking.orderservice.event.TicketRestockEvent;
+import com.booking.orderservice.event.TicketStockEvent;
 import com.booking.orderservice.exception.BusinessException;
 import com.booking.orderservice.exception.ErrorCode;
 import com.booking.orderservice.exception.NotFoundException;
@@ -21,10 +20,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -32,7 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static com.booking.orderservice.common.Constant.TICKET_RESTOCK_TOPIC;
+import static com.booking.orderservice.common.Constant.*;
 import static com.booking.orderservice.common.Utils.genRequestLockKey;
 
 @Service
@@ -49,14 +48,13 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean order(String ticketId, int quantity) {
-        boolean isDecrement = eventClient.decreaseStock(ticketId, quantity).getData();
-        if(!isDecrement){
+        boolean isDecrement = eventClient.releaseStock(ticketId, quantity).getData();
+        if (!isDecrement) {
             log.error("Decrease failed for ticket id {}", ticketId);
             throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
         try {
             // create order
-            BigDecimal price = getEffectivePrice(ticketId);
             LocalDateTime now = LocalDateTime.now();
             //TODO get id from securityContextHolders
             String tempUserId = String.valueOf(UUID.randomUUID());
@@ -64,35 +62,53 @@ public class OrderServiceImpl implements OrderService {
             Order order = Order.builder()
                     .customerId(tempUserId)
                     .orderNumber(orderNumber)
+                    .ticketId(ticketId)
                     .status(OrderStatus.PENDING)
-                    .price(price)
                     .quantity(quantity)
                     .orderDate(now)
                     .updatedAt(now)
                     .createdAt(now)
                     .build();
-            String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
-            orderRepository.insertOrder(tableName, order);
-            log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
-            return true;
-        } catch (Exception e) {
-            log.error("Decrease failed for ticket id {}, err: {}", ticketId, e.getMessage());
-            TicketRestockEvent event = TicketRestockEvent.builder()
-                    .ticketId(ticketId)
-                    .quantity(quantity)
-                    .build();
 
-            String jsonMsg = objectMapper.writeValueAsString(event);
+            String jsonMsg = objectMapper.writeValueAsString(order);
             OutboxMessage outboxMessage = OutboxMessage.builder()
-                    .topic(TICKET_RESTOCK_TOPIC)
-                    .aggregateType(TicketRestockEvent.class.getSimpleName())
+                    .topic(PLACE_ORDER_TOPIC)
+                    .aggregateType(Order.class.getSimpleName())
                     .payload(jsonMsg)
-                    .eventType("ticketRestock")
+                    .eventType("placeOrderTopic")
                     .createdAt(LocalDateTime.now())
                     .status(OutboxStatus.PENDING)
                     .build();
 
             outboxService.save(outboxMessage);
+            return true;
+        } catch (Exception e) {
+            log.error("Decrease failed for ticket id {}, err: {}", ticketId, e.getMessage());
+            buildErrorEvent(ticketId, quantity);
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    void buildErrorEvent(String ticketId, int quantity) {
+        TicketStockEvent event = TicketStockEvent.builder()
+                .ticketId(ticketId)
+                .quantity(quantity)
+                .build();
+        try {
+            String jsonMsg = objectMapper.writeValueAsString(event);
+            OutboxMessage outboxMessage = OutboxMessage.builder()
+                    .topic(TICKET_RESTOCK_TOPIC)
+                    .aggregateType(TicketStockEvent.class.getSimpleName())
+                    .payload(jsonMsg)
+                    .eventType("ticketRestock")
+                    .createdAt(LocalDateTime.now())
+                    .status(OutboxStatus.PENDING)
+                    .build();
+            outboxService.save(outboxMessage);
+        } catch (Exception e) {
+            // noti admin
+            log.error("Create restock event failed, event = {}", event);
             throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
     }
@@ -132,8 +148,8 @@ public class OrderServiceImpl implements OrderService {
                 return false;
             }
 
-            boolean isRestockSuccess = eventClient.increaseStock(order.getTicketId(), order.getQuantity()).getData();
-            if(!isRestockSuccess){
+            boolean isRestockSuccess = eventClient.reserveStock(order.getTicketId(), order.getQuantity()).getData();
+            if (!isRestockSuccess) {
                 log.error("Restock failed, cancel failed for order {}", orderNumber);
                 throw new BusinessException(ErrorCode.SERVER_ERROR);
             }
@@ -162,15 +178,6 @@ public class OrderServiceImpl implements OrderService {
             log.error("failed to extract year month: {}", e.getMessage());
             throw new RuntimeException(e);
         }
-    }
-
-    private BigDecimal getEffectivePrice(String ticketId) {
-        TicketResponseDTO ticket = eventClient.findTicketById(ticketId).getData();
-        if (ticket == null) return BigDecimal.valueOf(-1);
-        if (ticket.getFlashPrice() != null && ticket.getFlashPrice().compareTo(BigDecimal.valueOf(0)) > 0) {
-            return ticket.getOriginalPrice();
-        }
-        return ticket.getOriginalPrice() != null ? ticket.getOriginalPrice() : BigDecimal.valueOf(-1);
     }
 
 }

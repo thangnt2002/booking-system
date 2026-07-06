@@ -8,7 +8,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TicketRestockEvent {
+public class TicketStockEvent {
     String ticketId;
     int quantity;
 }

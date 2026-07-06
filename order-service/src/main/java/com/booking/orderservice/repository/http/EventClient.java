@@ -18,9 +18,12 @@ public interface EventClient {
     @GetMapping(value = "/internal/tickets/{ticketId}", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<TicketResponseDTO> findTicketById(@PathVariable("ticketId") String ticketId);
 
-    @PostMapping(value = "/internal/tickets/decrement/{ticketId}/{quantity}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<Boolean> decreaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity);
+    @PostMapping(value = "/internal/tickets/{ticketId}/{quantity}/release", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<Boolean> releaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity);
 
-    @PostMapping(value = "/internal/tickets/increment/{ticketId}/{quantity}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<Boolean> increaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity);
+    @PostMapping(value = "/internal/tickets/{ticketId}/{quantity}/reserve", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<Boolean> reserveStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity);
+
+    @PostMapping(value = "/internal/tickets/{ticketId}/{quantity}/decrease", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<Boolean> decreaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity);
 }
