@@ -6,20 +6,23 @@ import com.booking.orderservice.distributed.RedisDistributedService;
 import com.booking.orderservice.dto.response.TicketResponseDTO;
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OrderStatus;
+import com.booking.orderservice.enums.OutboxStatus;
 import com.booking.orderservice.event.TicketRestockEvent;
 import com.booking.orderservice.exception.BusinessException;
 import com.booking.orderservice.exception.ErrorCode;
 import com.booking.orderservice.exception.NotFoundException;
-import com.booking.orderservice.kafka.producer.EventProducer;
+import com.booking.orderservice.outbox.entity.OutboxMessage;
 import com.booking.orderservice.repository.OrderRepository;
 import com.booking.orderservice.repository.http.EventClient;
 import com.booking.orderservice.service.OrderService;
+import com.booking.orderservice.service.OutboxService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -39,18 +42,19 @@ import static com.booking.orderservice.common.Utils.genRequestLockKey;
 public class OrderServiceImpl implements OrderService {
     OrderRepository orderRepository;
     RedisDistributedService redisDistributedService;
-    EventProducer eventProducer;
     EventClient eventClient;
+    OutboxService outboxService;
+    ObjectMapper objectMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean order(String ticketId, int quantity) {
+        boolean isDecrement = eventClient.decreaseStock(ticketId, quantity).getData();
+        if(!isDecrement){
+            log.error("Decrease failed for ticket id {}", ticketId);
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
         try {
-            boolean isDecrement = eventClient.decreaseStock(ticketId, quantity).getData();
-            if(!isDecrement){
-                log.error("Decrease failed for ticket id {}", ticketId);
-                throw new BusinessException(ErrorCode.SERVER_ERROR);
-            }
             // create order
             BigDecimal price = getEffectivePrice(ticketId);
             LocalDateTime now = LocalDateTime.now();
@@ -73,9 +77,22 @@ public class OrderServiceImpl implements OrderService {
             return true;
         } catch (Exception e) {
             log.error("Decrease failed for ticket id {}, err: {}", ticketId, e.getMessage());
-            eventProducer.sendMsg(TICKET_RESTOCK_TOPIC, TicketRestockEvent.builder()
+            TicketRestockEvent event = TicketRestockEvent.builder()
                     .ticketId(ticketId)
-                    .quantity(quantity));
+                    .quantity(quantity)
+                    .build();
+
+            String jsonMsg = objectMapper.writeValueAsString(event);
+            OutboxMessage outboxMessage = OutboxMessage.builder()
+                    .topic(TICKET_RESTOCK_TOPIC)
+                    .aggregateType(TicketRestockEvent.class.getSimpleName())
+                    .payload(jsonMsg)
+                    .eventType("ticketRestock")
+                    .createdAt(LocalDateTime.now())
+                    .status(OutboxStatus.PENDING)
+                    .build();
+
+            outboxService.save(outboxMessage);
             throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
     }

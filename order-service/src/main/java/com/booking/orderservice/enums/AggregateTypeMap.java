@@ -1,0 +1,30 @@
+package com.booking.orderservice.enums;
+
+import com.booking.orderservice.event.TicketRestockEvent;
+import com.booking.orderservice.exception.BusinessException;
+import com.booking.orderservice.exception.ErrorCode;
+
+import java.util.Arrays;
+
+public enum AggregateTypeMap {
+    TICKET_RESTOCK("TicketRestockEvent", TicketRestockEvent.class),
+    ORDER_CREATED("OrderCreated", TicketRestockEvent.class);
+
+    String type;
+    Class<?> clazz;
+
+    AggregateTypeMap(String type, Class<?> clazz) {
+        this.type = type;
+        this.clazz = clazz;
+    }
+
+    public static Class<?> toClass(String targetType) {
+        return Arrays.stream(values())
+                .filter(typeMap -> typeMap.type.equals(targetType))
+                .map(typeMap -> typeMap.clazz)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.SERVER_ERROR));
+    }
+
+
+}
