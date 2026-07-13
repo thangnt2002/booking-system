@@ -42,7 +42,7 @@ public class Ticket {
     @Column(name = "stock_available", nullable = false)
     Integer stockAvailable;
 
-    @Column(name = "reserved_stock", nullable = false)
+    @Column(name = "reserved_stock", nullable = false, columnDefinition = "INT DEFAULT 0")
     Integer reservedStock;
 
     @Column(name = "original_price", precision = 18, scale = 2)

@@ -56,7 +56,6 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .executeUpdate();
     }
 
-    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     void ensureTableExist(String tableName){
         if(tableCreatedCache.containsKey(tableName)){
