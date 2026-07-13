@@ -3,6 +3,8 @@ package com.booking.orderservice.repository.impl;
 
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OrderStatus;
+import com.booking.orderservice.exception.BusinessException;
+import com.booking.orderservice.exception.ErrorCode;
 import com.booking.orderservice.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import lombok.AccessLevel;
@@ -10,12 +12,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -33,16 +37,17 @@ public class OrderRepositoryImpl implements OrderRepository {
     public void insertOrder(String yearMonthFormat, Order order) {
         String tableName = createTableName(yearMonthFormat);
         ensureTableExist(tableName);
-        String sql = "INSERT INTO " + tableName + " (order_number, customer_id, order_date," +
+        String sql = "INSERT INTO " + tableName + " (id, order_number, customer_id, order_date," +
                 "status, ticket_id, quantity, price, updated_at, created_at)" +
-                "VALUES (:orderNumber, :customerId, :orderDate, :status, :ticketId, :quantity, :price, " +
+                "VALUES (:id, :orderNumber, :customerId, :orderDate, :status, :ticketId, :quantity, :price, " +
                 ":updatedAt, :createdAt)";
 
         entityManager.createNativeQuery(sql)
-                .setParameter("order_number", order.getOrderNumber())
+                .setParameter("id", order.getId() != null ? order.getId() : UUID.randomUUID().toString())
+                .setParameter("orderNumber", order.getOrderNumber())
                 .setParameter("customerId", order.getCustomerId())
                 .setParameter("orderDate", order.getOrderDate())
-                .setParameter("status", order.getStatus())
+                .setParameter("status", order.getStatus().name())
                 .setParameter("ticketId", order.getTicketId())
                 .setParameter("quantity", order.getQuantity())
                 .setParameter("price", order.getPrice())
@@ -51,7 +56,8 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .executeUpdate();
     }
 
-    @Transactional
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     void ensureTableExist(String tableName){
         if(tableCreatedCache.containsKey(tableName)){
             return;
@@ -66,6 +72,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 tableCreatedCache.put(tableName, true);
             }catch (Exception e){
                 log.error("create table err for name: {}", tableName);
+                throw new BusinessException(ErrorCode.SERVER_ERROR);
             }
         }
     }
@@ -112,5 +119,22 @@ public class OrderRepositoryImpl implements OrderRepository {
         return String.format("ticket_order_%s", yearMonth);
     }
 
-    private static final String CREATE_TABLE_TEMPLATE = "%s";
+    private static final String CREATE_TABLE_TEMPLATE = """
+        IF OBJECT_ID(N'%1$s', N'U') IS NULL
+        BEGIN
+            CREATE TABLE %1$s (
+                id              NVARCHAR(36)     NOT NULL PRIMARY KEY,
+                order_number    NVARCHAR(100)     NOT NULL,
+                customer_id     NVARCHAR(36)     NOT NULL,
+                order_date      DATETIME2        NOT NULL,
+                status          NVARCHAR(30)     NOT NULL,
+                ticket_id       NVARCHAR(36)     NOT NULL,
+                quantity        INT              NOT NULL,
+                price           DECIMAL(18,2)    NOT NULL,
+                updated_at      DATETIME2        NULL,
+                created_at      DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
+                CONSTRAINT UQ_%1$s_order_number UNIQUE (order_number)
+            )
+        END
+        """;
 }

@@ -48,7 +48,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean order(String ticketId, int quantity) {
-        boolean isDecrement = eventClient.releaseStock(ticketId, quantity).getData();
+        boolean isDecrement = eventClient.reserveStock(ticketId, quantity).getData();
         if (!isDecrement) {
             log.error("Decrease failed for ticket id {}", ticketId);
             throw new BusinessException(ErrorCode.SERVER_ERROR);
@@ -148,7 +148,7 @@ public class OrderServiceImpl implements OrderService {
                 return false;
             }
 
-            boolean isRestockSuccess = eventClient.reserveStock(order.getTicketId(), order.getQuantity()).getData();
+            boolean isRestockSuccess = eventClient.releaseStock(order.getTicketId(), order.getQuantity()).getData();
             if (!isRestockSuccess) {
                 log.error("Restock failed, cancel failed for order {}", orderNumber);
                 throw new BusinessException(ErrorCode.SERVER_ERROR);

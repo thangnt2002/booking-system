@@ -37,6 +37,6 @@ public class OutboxServiceImpl implements OutboxService {
 
     @Override
     public void markAsPublish(String outboxId) {
-        outboxRepository.updateStatus(outboxId, OutboxStatus.SENT);
+        outboxRepository.updateStatus(outboxId, OutboxStatus.SENT.name());
     }
 }

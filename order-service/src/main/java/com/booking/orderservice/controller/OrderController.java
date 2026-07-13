@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,13 +25,14 @@ public class OrderController {
 
     @PostMapping("/{ticketId}/{quantity}")
     public ResponseEntity<ApiResponse<Void>> order(@PathVariable("ticketId") String ticketId,
-                                                   @PathVariable("quantity") int quantity ){
+                                                   @PathVariable("quantity") int quantity) {
         orderService.order(ticketId, quantity);
-        return ResponseEntity.ok(ApiResponse.<Void>builder().code(200).success(true).build());
+        return ResponseEntity.status(HttpStatus.CREATED).
+                body(ApiResponse.<Void>builder().code(201).success(true).build());
     }
 
     @PostMapping("/cancel/{orderNumber}")
-    public ResponseEntity<ApiResponse<Void>> cancelOrder(@PathVariable("orderNumber") String orderNumber){
+    public ResponseEntity<ApiResponse<Void>> cancelOrder(@PathVariable("orderNumber") String orderNumber) {
         boolean response = orderService.cancelOrder(orderNumber);
         return ResponseEntity.ok(ApiResponse.<Void>builder().code(200).success(response).build());
     }

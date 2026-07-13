@@ -8,7 +8,7 @@ import com.booking.orderservice.exception.ErrorCode;
 import java.util.Arrays;
 
 public enum AggregateTypeMap {
-    TICKET_RESTOCK("TicketSockEvent", TicketStockEvent.class),
+    TICKET_RESTOCK("TicketStockEvent", TicketStockEvent.class),
     ORDER_CREATED("Order", Order.class);
 
     String type;

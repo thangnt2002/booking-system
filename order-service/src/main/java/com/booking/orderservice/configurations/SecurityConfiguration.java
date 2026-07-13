@@ -20,7 +20,7 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    private final String[] PUBLIC_ENDPOINT = {"/events/create", "/events/update/{id}", "/events/{id}", "/tickets/create", "/tickets/{id}"};
+    private final String[] PUBLIC_ENDPOINT = {"/orders/**"};
 
     @Autowired
     private CustomJWTDecoder customJWTDecoder;
@@ -28,6 +28,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         //security for api endpoint
+
         http.authorizeHttpRequests(request ->
                 request.requestMatchers(
                         HttpMethod.GET, PUBLIC_ENDPOINT).permitAll()
