@@ -19,7 +19,29 @@ public class TicketInternalController {
     TicketService ticketService;
 
 
-    @PostMapping("/decrement/{ticketId}/{quantity}")
+    @PostMapping("/{ticketId}/{quantity}/reserve")
+    public ResponseEntity<ApiResponse<Boolean>> reserveStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
+        boolean result = ticketService.reserveStock(ticketId, quantity);
+        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
+                .success(true)
+                .code(200)
+                .data(result)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/{ticketId}/{quantity}/release")
+    public ResponseEntity<ApiResponse<Boolean>> releaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
+        boolean result = ticketService.releaseStock(ticketId, quantity);
+        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
+                .success(true)
+                .code(200)
+                .data(result)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/{ticketId}/{quantity}/decrease")
     public ResponseEntity<ApiResponse<Boolean>> decreaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
         boolean result = ticketService.decreaseStock(ticketId, quantity);
         ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
@@ -30,22 +52,11 @@ public class TicketInternalController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @PostMapping("/increment/{ticketId}/{quantity}")
-    public ResponseEntity<ApiResponse<Boolean>> increaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
-        boolean result = ticketService.decreaseStock(ticketId, quantity);
-        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
-                .success(true)
-                .code(200)
-                .data(result)
-                .build();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @GetMapping("/{id}")
-    ResponseEntity<ApiResponse<TicketResponseDTO>> findById(@PathVariable("id") String id,
+    @GetMapping("/{ticketId}")
+    ResponseEntity<ApiResponse<TicketResponseDTO>> findById(@PathVariable("ticketId") String ticketId,
                                                             @RequestParam(name = "version", required = false) Long version
     ){
-        TicketResponseDTO dto = ticketService.findTicketById(id, version);
+        TicketResponseDTO dto = ticketService.findTicketById(ticketId, version);
         ApiResponse<TicketResponseDTO> response = ApiResponse.<TicketResponseDTO>builder()
                 .success(true)
                 .code(200)

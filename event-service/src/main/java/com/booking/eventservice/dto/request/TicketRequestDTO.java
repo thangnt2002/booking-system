@@ -29,6 +29,8 @@ public class TicketRequestDTO {
 
     private Integer stockAvailable;
 
+    private Integer reservedStock;
+
     private BigDecimal originalPrice;
 
     private BigDecimal flashPrice;

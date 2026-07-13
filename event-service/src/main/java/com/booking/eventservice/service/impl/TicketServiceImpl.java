@@ -1,6 +1,7 @@
 package com.booking.eventservice.service.impl;
 
 import com.booking.eventservice.cache.TicketCacheService;
+import com.booking.eventservice.distributed.RedisInfraService;
 import com.booking.eventservice.dto.cache.TicketCache;
 import com.booking.eventservice.dto.request.TicketRequestDTO;
 import com.booking.eventservice.dto.response.TicketResponseDTO;
@@ -23,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static com.booking.eventservice.common.Utils.genDistributedTicketStockAvailableKey;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -33,6 +36,7 @@ public class TicketServiceImpl implements TicketService {
     EventRepository evenEventRepository;
     TicketMapper ticketMapper;
     TicketCacheService ticketCacheService;
+    RedisInfraService redisInfraService;
 
     @Override
     @Transactional
@@ -84,13 +88,13 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public boolean decreaseStock(String ticketId, int quantity) {
+    public boolean reserveStock(String ticketId, int quantity) {
         boolean isRedisDecremented = false;
         try {
             int deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
             if (deductionResult == -1) {
                 log.info("decrease stock: cache miss for ticketId={}", ticketId);
-                // TODO add stock available to cache
+                warmCache(ticketId);
                 // decrease after add stock to cache
                 deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
             }
@@ -99,15 +103,6 @@ public class TicketServiceImpl implements TicketService {
                 return false;
             }
             isRedisDecremented = true;
-            // decrease in cache ok -> sync to db
-            boolean isDbDecremented = ticketRepository.decreaseStock(ticketId, quantity);
-
-            if (!isDbDecremented) {
-                ticketCacheService.increaseStock(ticketId, quantity);
-                log.info("DecreaseStock failed for ticketId={}, quantity = {}", ticketId, quantity);
-                return false;
-            }
-
             log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
             return true;
         } catch (PessimisticLockException e) {
@@ -131,8 +126,39 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    private void warmCache(String ticketId) {
+        if (ticketId == null) {
+            return;
+        }
+        TicketCache cached = ticketCacheService.getTicket(ticketId, null);
+        if (cached == null || cached.isNullObject()){
+            return;
+        }
+        log.info("Warming cache for ticket = {}", ticketId);
+        Ticket ticket = cached.getTicket();
+        String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
+        redisInfraService.setObject(stockAvailableCacheKey, ticket.getStockAvailable());
+    }
+
     @Override
-    public boolean increaseStock(String ticketId, int quantity) {
+    @Transactional
+    public boolean decreaseStock(String ticketId, int quantity) {
+        int isDbDecremented = ticketRepository.decreaseStock(ticketId, quantity);
+
+        try {
+            if (isDbDecremented > 0) {
+                return true;
+            }
+            log.info("DecreaseStock failed for ticketId={}, quantity = {}", ticketId, quantity);
+            return false;
+        } catch (Exception e) {
+            log.error("decreaseStock err. Id = {}, quantity = {}, err= {}.", ticketId, quantity, e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean releaseStock(String ticketId, int quantity) {
         return ticketCacheService.increaseStock(ticketId, quantity);
     }
 

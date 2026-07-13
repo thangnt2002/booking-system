@@ -16,4 +16,5 @@ public class Constant {
     public static final String CACHE_NULL = "__NULL__";
 
     public static final String TICKET_RESTOCK_TOPIC = "ticket-restock-topic";
+    public static final String TICKET_DECREASE_STOCK_TOPIC = "ticket-decrease-stock-topic";
 }
