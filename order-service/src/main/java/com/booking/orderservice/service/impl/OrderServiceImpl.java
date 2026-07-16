@@ -3,6 +3,9 @@ package com.booking.orderservice.service.impl;
 
 import com.booking.orderservice.distributed.RedisDistributedLocker;
 import com.booking.orderservice.distributed.RedisDistributedService;
+import com.booking.orderservice.dto.CursorDTO;
+import com.booking.orderservice.dto.Page;
+import com.booking.orderservice.dto.response.OrderResponseDTO;
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OrderStatus;
 import com.booking.orderservice.enums.OutboxStatus;
@@ -10,15 +13,18 @@ import com.booking.orderservice.event.TicketStockEvent;
 import com.booking.orderservice.exception.BusinessException;
 import com.booking.orderservice.exception.ErrorCode;
 import com.booking.orderservice.exception.NotFoundException;
+import com.booking.orderservice.mapper.OrderMapper;
 import com.booking.orderservice.outbox.entity.OutboxMessage;
 import com.booking.orderservice.repository.OrderRepository;
 import com.booking.orderservice.repository.http.EventClient;
+import com.booking.orderservice.service.CursorService;
 import com.booking.orderservice.service.OrderService;
 import com.booking.orderservice.service.OutboxService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +34,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +51,9 @@ public class OrderServiceImpl implements OrderService {
     RedisDistributedService redisDistributedService;
     EventClient eventClient;
     OutboxService outboxService;
+    CursorService cursorService;
     ObjectMapper objectMapper;
+    OrderMapper orderMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -161,6 +171,48 @@ public class OrderServiceImpl implements OrderService {
         } finally {
             locker.unlock();
         }
+    }
+
+    @Override
+    public Page<OrderResponseDTO> getPage(String userId, String table, String cursor, int limit, String search) {
+        int safeLimit = Math.min(limit, 50) + 1;
+        CursorDTO cursorDTO = cursorService.parseCursor(cursor);
+        List<Order> orders;
+        if (cursorDTO == null) {
+            orders = orderRepository.findPage(userId, table, safeLimit, search);
+        } else {
+            if (cursorDTO.getId() == null || cursorDTO.getDate() == null) {
+                log.error("Invalid cursor data");
+                throw new BusinessException(ErrorCode.SERVER_ERROR);
+            }
+            orders = orderRepository.findCursorPage(userId, cursorDTO.getId(), table, cursorDTO.getDate(), safeLimit, search);
+        }
+
+        if (orders.isEmpty()) {
+            return Page.<OrderResponseDTO>builder()
+                    .data(List.of())
+                    .build();
+        }
+
+        boolean hasNext = false;
+        String nextCursor = StringUtils.EMPTY;
+        if (orders.size() == safeLimit) {
+            orders.removeLast();
+            hasNext = true;
+        }
+        if(hasNext) {
+            Order lastOrder = orders.getLast();
+            nextCursor = cursorService.generateCursor(lastOrder.getId(), lastOrder.getCreatedAt());
+        }
+        List<OrderResponseDTO> orderResponses = new ArrayList<>(orders
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList());
+        return Page.<OrderResponseDTO>builder()
+                .data(orderResponses)
+                .cursor(nextCursor)
+                .hasNext(hasNext)
+                .build();
     }
 
     private String extractYearMonthFromOrder(String orderNumber) {

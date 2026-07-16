@@ -42,5 +42,8 @@ spring:
         spring.json.type.mapping: "ticketStockMsg:com.booking.orderservice.event.TicketStockEvent, orderMsg:com.booking.orderservice.entity.Order"
 
 app:
+  security:
+    cursor-secret-key: mwjzowfpyvrkgjax
+
   profile:
     event: http://localhost:8084/event

@@ -2,6 +2,11 @@ package com.booking.orderservice.controller;
 
 
 import com.booking.orderservice.dto.ApiResponse;
+import com.booking.orderservice.dto.CursorDTO;
+import com.booking.orderservice.dto.Page;
+import com.booking.orderservice.dto.response.OrderResponseDTO;
+import com.booking.orderservice.repository.OrderRepository;
+import com.booking.orderservice.service.CursorService;
 import com.booking.orderservice.service.OrderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -9,10 +14,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -37,4 +39,20 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.<Void>builder().code(200).success(response).build());
     }
 
+    @GetMapping("/page/{userId}")
+    public ResponseEntity<ApiResponse<Page<OrderResponseDTO>>> pageOrderByUser(
+            @PathVariable("userId") String userId,
+            @RequestParam(value = "table", required = true) String table,
+            @RequestParam(value = "cursor", defaultValue = "") String cursor,
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(value = "search", defaultValue = "") String search
+    ) {
+         Page<OrderResponseDTO> page = orderService.getPage(userId, table, cursor, limit, search);
+         ApiResponse<Page<OrderResponseDTO>> response = ApiResponse.<Page<OrderResponseDTO>>builder()
+                 .success(true)
+                 .code(200)
+                 .data(page)
+                 .build();
+         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 }

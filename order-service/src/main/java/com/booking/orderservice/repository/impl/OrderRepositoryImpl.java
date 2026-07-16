@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level =  AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderRepositoryImpl implements OrderRepository {
 
     EntityManager entityManager;
@@ -57,19 +58,19 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    void ensureTableExist(String tableName){
-        if(tableCreatedCache.containsKey(tableName)){
+    void ensureTableExist(String tableName) {
+        if (tableCreatedCache.containsKey(tableName)) {
             return;
         }
-        synchronized (tableCreatedCache){
-            if(tableCreatedCache.containsKey(tableName)){
+        synchronized (tableCreatedCache) {
+            if (tableCreatedCache.containsKey(tableName)) {
                 return;
             }
             try {
                 String createTableQuery = String.format(CREATE_TABLE_TEMPLATE, tableName);
                 entityManager.createNativeQuery(createTableQuery).executeUpdate();
                 tableCreatedCache.put(tableName, true);
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.error("create table err for name: {}", tableName);
                 throw new BusinessException(ErrorCode.SERVER_ERROR);
             }
@@ -83,21 +84,21 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public Order findByOrderNumber(String yearMonth, String orderNumber) {
-        String sql = "SELECT * FROM " + createTableName(yearMonth) + " WHERE orderNumber = :orderNumber";
+        String sql = "SELECT * FROM " + createTableName(yearMonth) + " WHERE order_number = :orderNumber";
         List<Object[]> result = entityManager.createNativeQuery(sql)
                 .setParameter("orderNumber", orderNumber)
                 .getResultList();
-        if(result.isEmpty()) return null;
+        if (result.isEmpty()) return null;
         Object[] row = result.getFirst();
         return new Order(
                 (String) row[0],
                 (String) row[1],
                 (String) row[2],
                 (LocalDateTime) row[3],
-                (OrderStatus) row[4],
+                OrderStatus.valueOf(row[4].toString()),
                 (String) row[5],
-                (Integer) row [6],
-                (BigDecimal) row [7],
+                (Integer) row[6],
+                (BigDecimal) row[7],
                 (LocalDateTime) row[8],
                 (LocalDateTime) row[9]
         );
@@ -114,26 +115,104 @@ public class OrderRepositoryImpl implements OrderRepository {
         return result > 0;
     }
 
-    private String createTableName(String yearMonth){
+    @Override
+    public Order findByDate(String yearMonth, LocalDateTime date) {
+        String sql = "SELECT * FROM " + createTableName(yearMonth) + " WHERE order_date = :orderDate";
+        List<Object[]> result = entityManager.createNativeQuery(sql)
+                .setParameter("orderDate", date)
+                .getResultList();
+        if (result.isEmpty()) return null;
+        Object[] row = result.getFirst();
+        return new Order(
+                (String) row[0],
+                (String) row[1],
+                (String) row[2],
+                (LocalDateTime) row[3],
+                OrderStatus.valueOf(row[4].toString()),
+                (String) row[5],
+                (Integer) row[6],
+                (BigDecimal) row[7],
+                (LocalDateTime) row[8],
+                (LocalDateTime) row[9]
+        );
+    }
+
+    @Override
+    public List<Order> findCursorPage(String userId, String orderId, String yearMonth, LocalDateTime createdDate, int limit, String search) {
+        String sql = "SELECT top (:limit) * FROM " + yearMonth + " WHERE customer_id = :userId " +
+                "AND order_date < :createdDate AND id < :orderId ORDER BY created_at DESC, id DESC";
+        List<Object[]> rows = entityManager.createNativeQuery(sql)
+                .setParameter("userId", userId)
+                .setParameter("createdDate", createdDate)
+                .setParameter("orderId", orderId)
+                .setParameter("limit", limit)
+                .getResultList();
+        if (rows.isEmpty()) return List.of();
+        List<Order> orders = new ArrayList<>();
+        rows.forEach(row -> {
+            Order order = Order.builder()
+                    .id((String) row[0])
+                    .orderNumber((String) row[1])
+                    .customerId((String) row[2])
+                    .orderDate((LocalDateTime) row[3])
+                    .status(OrderStatus.valueOf(row[4].toString()))
+                    .ticketId((String) row[5])
+                    .quantity((Integer) row[6])
+                    .price((BigDecimal) row[7])
+                    .createdAt((LocalDateTime) row[9])
+                    .build();
+            orders.add(order);
+        });
+        return orders;
+    }
+
+    @Override
+    public List<Order> findPage(String userId, String yearMonth, int limit, String search) {
+           String sql = "SELECT top (:limit) * FROM " + yearMonth + " WHERE customer_id = :userId " +
+                   "  ORDER BY created_at DESC, id DESC";
+           List<Object[]> rows = entityManager.createNativeQuery(sql)
+                   .setParameter("userId", userId)
+                   .setParameter("limit", limit)
+                   .getResultList();
+           if (rows.isEmpty()) return List.of();
+           List<Order> orders = new ArrayList<>();
+           rows.forEach(row -> {
+               Order order = Order.builder()
+                       .id((String) row[0])
+                       .orderNumber((String) row[1])
+                       .customerId((String) row[2])
+                       .orderDate((LocalDateTime) row[3])
+                       .status(OrderStatus.valueOf(row[4].toString()))
+                       .ticketId((String) row[5])
+                       .quantity((Integer) row[6])
+                       .price((BigDecimal) row[7])
+                       .createdAt((LocalDateTime) row[9])
+                       .build();
+               orders.add(order);
+           });
+           return orders;
+    }
+
+    private String createTableName(String yearMonth) {
         return String.format("ticket_order_%s", yearMonth);
     }
 
     private static final String CREATE_TABLE_TEMPLATE = """
-        IF OBJECT_ID(N'%1$s', N'U') IS NULL
-        BEGIN
-            CREATE TABLE %1$s (
-                id              NVARCHAR(36)     NOT NULL PRIMARY KEY,
-                order_number    NVARCHAR(100)     NOT NULL,
-                customer_id     NVARCHAR(36)     NOT NULL,
-                order_date      DATETIME2        NOT NULL,
-                status          NVARCHAR(30)     NOT NULL,
-                ticket_id       NVARCHAR(36)     NOT NULL,
-                quantity        INT              NOT NULL,
-                price           DECIMAL(18,2)    NOT NULL,
-                updated_at      DATETIME2        NULL,
-                created_at      DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
-                CONSTRAINT UQ_%1$s_order_number UNIQUE (order_number)
-            )
-        END
-        """;
+            IF OBJECT_ID(N'%1$s', N'U') IS NULL
+            BEGIN
+                CREATE TABLE %1$s (
+                    id              NVARCHAR(36)     NOT NULL PRIMARY KEY,
+                    order_number    NVARCHAR(100)     NOT NULL,
+                    customer_id     NVARCHAR(36)     NOT NULL,
+                    order_date      DATETIME2        NOT NULL,
+                    status          NVARCHAR(30)     NOT NULL,
+                    ticket_id       NVARCHAR(36)     NOT NULL,
+                    quantity        INT              NOT NULL,
+                    price           DECIMAL(18,2)    NOT NULL,
+                    updated_at      DATETIME2        NULL,
+                    created_at      DATETIME2        NOT NULL DEFAULT SYSUTCDATETIME(),
+                    CONSTRAINT UQ_%1$s_order_number UNIQUE (order_number)
+                )
+            END
+            """;
 }
