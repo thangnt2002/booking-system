@@ -177,16 +177,7 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderResponseDTO> getPage(String userId, String table, String cursor, int limit, String search) {
         int safeLimit = Math.min(limit, 50) + 1;
         CursorDTO cursorDTO = cursorService.parseCursor(cursor);
-        List<Order> orders;
-        if (cursorDTO == null) {
-            orders = orderRepository.findPage(userId, table, safeLimit, search);
-        } else {
-            if (cursorDTO.getId() == null || cursorDTO.getDate() == null) {
-                log.error("Invalid cursor data");
-                throw new BusinessException(ErrorCode.SERVER_ERROR);
-            }
-            orders = orderRepository.findCursorPage(userId, cursorDTO.getId(), table, cursorDTO.getDate(), safeLimit, search);
-        }
+        List<Order> orders = orderRepository.findCursorPage(userId, cursorDTO.getId(), table, cursorDTO.getDate(), safeLimit, search);
 
         if (orders.isEmpty()) {
             return Page.<OrderResponseDTO>builder()

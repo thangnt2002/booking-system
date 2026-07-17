@@ -7,6 +7,7 @@ import com.booking.orderservice.exception.BusinessException;
 import com.booking.orderservice.exception.ErrorCode;
 import com.booking.orderservice.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -139,14 +140,39 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public List<Order> findCursorPage(String userId, String orderId, String yearMonth, LocalDateTime createdDate, int limit, String search) {
-        String sql = "SELECT top (:limit) * FROM " + yearMonth + " WHERE customer_id = :userId " +
-                "AND order_date < :createdDate AND id < :orderId ORDER BY created_at DESC, id DESC";
-        List<Object[]> rows = entityManager.createNativeQuery(sql)
+        if (!yearMonth.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Invalid table name: " + yearMonth);
+        }
+
+        StringBuilder sql = new StringBuilder("SELECT TOP (:limit) * FROM ")
+                .append(yearMonth)
+                .append(" WHERE customer_id = :userId ");
+
+        boolean hasCursor = createdDate != null && orderId != null;
+        if (hasCursor) {
+            sql.append("AND (created_at < :createdDate OR (created_at = :createdDate AND id < :orderId)) ");
+        }
+
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        if (hasSearch) {
+            sql.append("AND (order_number LIKE :search OR ticket_id LIKE :search) ");
+        }
+
+        sql.append("ORDER BY created_at DESC, id DESC");
+
+        Query query = entityManager.createNativeQuery(sql.toString())
                 .setParameter("userId", userId)
-                .setParameter("createdDate", createdDate)
-                .setParameter("orderId", orderId)
-                .setParameter("limit", limit)
-                .getResultList();
+                .setParameter("limit", limit);
+        if (hasCursor) {
+            query.setParameter("createdDate", createdDate);
+            query.setParameter("orderId", orderId);
+        }
+
+        if (hasSearch) {
+            query.setParameter("search", "%" + search.trim() + "%");
+        }
+
+        List<Object[]> rows = query.getResultList();
         if (rows.isEmpty()) return List.of();
         List<Order> orders = new ArrayList<>();
         rows.forEach(row -> {

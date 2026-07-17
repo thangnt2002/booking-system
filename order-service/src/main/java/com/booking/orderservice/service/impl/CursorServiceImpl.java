@@ -62,7 +62,7 @@ public class CursorServiceImpl implements CursorService {
 
     public CursorDTO parseCursor(String cursor) {
         if (cursor == null || cursor.isBlank()) {
-            return null;
+            return new CursorDTO();
         }
         try {
             byte[] decoded = Base64.getUrlDecoder().decode(cursor);
