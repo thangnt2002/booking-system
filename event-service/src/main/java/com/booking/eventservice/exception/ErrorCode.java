@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatusCode;
 @Getter
 public enum ErrorCode {
     DATA_NOT_FOUND(404, Constant.DATA_NOTFOUND, HttpStatus.NOT_FOUND),
+    BAD_REQUEST(404, Constant.DATA_NOTFOUND, HttpStatus.BAD_REQUEST),
     FORBIDDEN(403, Constant.FORBIDDEN, HttpStatus.FORBIDDEN),
     SERVER_ERROR(500, Constant.SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR),
     UN_AUTHORIZE(401, Constant.UN_AUTHORIZE, HttpStatus.UNAUTHORIZED),

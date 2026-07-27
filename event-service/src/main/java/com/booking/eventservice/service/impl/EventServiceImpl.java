@@ -1,6 +1,8 @@
 package com.booking.eventservice.service.impl;
 
 import com.booking.eventservice.cache.EventCacheService;
+import com.booking.eventservice.dto.CursorDTO;
+import com.booking.eventservice.dto.Page;
 import com.booking.eventservice.dto.cache.EventCache;
 import com.booking.eventservice.dto.request.EventRequestDTO;
 import com.booking.eventservice.dto.response.EventResponseDTO;
@@ -9,14 +11,17 @@ import com.booking.eventservice.exception.BusinessException;
 import com.booking.eventservice.exception.ErrorCode;
 import com.booking.eventservice.mapper.EventMapper;
 import com.booking.eventservice.repository.EventRepository;
+import com.booking.eventservice.service.CursorService;
 import com.booking.eventservice.service.EventService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +31,7 @@ public class EventServiceImpl implements EventService {
     EventRepository eventRepository;
     EventMapper eventMapper;
     EventCacheService eventCacheService;
-
+    CursorService cursorService;
 
     @Override
     @Transactional
@@ -54,11 +59,44 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventResponseDTO findEventById(String id, Long version){
+    public EventResponseDTO findEventById(String id, Long version) {
         EventCache cachedEvent = getEventFromCache(id, version);
         EventResponseDTO response = eventMapper.toResponse(cachedEvent.getEvent());
         response.setVersion(cachedEvent.getVersion());
         return response;
+    }
+
+    @Override
+    public Page<EventResponseDTO> getCusrorPage(String cursor, int limit, String searchKey) {
+        int safeLimit = Math.min(limit, 50) + 1;
+        CursorDTO cursorDTO = cursorService.parseCursor(cursor);
+        List<Event> events = eventRepository.findCursorPage(cursorDTO.getId(), cursorDTO.getDate(), safeLimit, searchKey);
+        if (events.isEmpty()) {
+            return Page.<EventResponseDTO>builder()
+                    .data(List.of())
+                    .build();
+        }
+
+        boolean hasNext = false;
+        String nextCursor = StringUtils.EMPTY;
+        if (events.size() == safeLimit) {
+            hasNext = true;
+            events.removeLast();
+            Event lastEvent = events.getLast();
+            nextCursor = cursorService.generateCursor(lastEvent.getId(), lastEvent.getCreatedAt());
+        }
+        List<EventResponseDTO> response = events.stream().map(eventMapper::toResponse).toList();
+
+        return Page.<EventResponseDTO>builder()
+                .hasNext(hasNext)
+                .cursor(nextCursor)
+                .data(response)
+                .build();
+    }
+
+    @Override
+    public List<Event> getList() {
+        return eventRepository.findAll();
     }
 
     @Override
@@ -79,8 +117,8 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private EventCache getEventFromCache(String id, Long version){
-        if(id == null){
+    private EventCache getEventFromCache(String id, Long version) {
+        if (id == null) {
             return null;
         }
         return eventCacheService.getEvent(id, version);

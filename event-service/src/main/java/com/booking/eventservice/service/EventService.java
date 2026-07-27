@@ -1,8 +1,11 @@
 package com.booking.eventservice.service;
 
+import com.booking.eventservice.dto.Page;
 import com.booking.eventservice.dto.request.EventRequestDTO;
 import com.booking.eventservice.dto.response.EventResponseDTO;
 import com.booking.eventservice.entity.Event;
+
+import java.util.List;
 
 public interface EventService {
 
@@ -15,5 +18,9 @@ public interface EventService {
     Event softDelete (String id);
 
     EventResponseDTO findEventById(String id, Long version);
+
+    Page<EventResponseDTO> getCusrorPage(String cursor, int limit, String searchKey);
+
+    List<Event> getList();
 
 }

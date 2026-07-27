@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @Slf4j
 @RestController
@@ -27,7 +29,7 @@ public class EventController {
     EventMapper eventMapper;
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<EventResponseDTO>> create(@RequestBody EventRequestDTO request){
+    public ResponseEntity<ApiResponse<EventResponseDTO>> create(@RequestBody EventRequestDTO request) {
         Event x = eventService.create(request);
         EventResponseDTO event = eventMapper.toResponse(x);
         ApiResponse<EventResponseDTO> response = ApiResponse.<EventResponseDTO>builder()
@@ -40,8 +42,8 @@ public class EventController {
 
     @GetMapping("/{id}")
     ResponseEntity<ApiResponse<EventResponseDTO>> findById(@PathVariable("id") String id,
-        @RequestParam(name = "version", required = false) Long version
-    ){
+                                                           @RequestParam(name = "version", required = false) Long version
+    ) {
         EventResponseDTO dto = eventService.findEventById(id, version);
         ApiResponse<EventResponseDTO> response = ApiResponse.<EventResponseDTO>builder()
                 .success(true)
@@ -54,7 +56,7 @@ public class EventController {
     @PutMapping("/update/{id}")
     ResponseEntity<ApiResponse<EventResponseDTO>> update(@PathVariable("id") String id,
                                                          @RequestBody EventRequestDTO eventRequestDTO
-    ){
+    ) {
         Event event = eventService.update(id, eventRequestDTO);
         EventResponseDTO dto = eventMapper.toResponse(event);
         ApiResponse<EventResponseDTO> response = ApiResponse.<EventResponseDTO>builder()
@@ -66,14 +68,28 @@ public class EventController {
     }
 
 
-    @GetMapping("/page/{cursor}/{limit}")
-    public ResponseEntity<ApiResponse<Page<EventResponseDTO>>> getPage(@PathVariable("cursor") long cursor,
-                                                                       @PathVariable("limit") int limit ){
-        Page<EventResponseDTO> page = eventService.getPage(cursor, limit);
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<Page<EventResponseDTO>>> getCursorPage(
+            @RequestParam(value = "cursor", defaultValue = "") String cursor,
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(value = "searchKey", defaultValue = "") String searchKey) {
+        Page<EventResponseDTO> page = eventService.getCusrorPage(cursor, limit, searchKey);
         ApiResponse<Page<EventResponseDTO>> response = ApiResponse.<Page<EventResponseDTO>>builder()
                 .success(true)
                 .code(200)
                 .data(page)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<List<EventResponseDTO>>> getList() {
+        List<Event> events = eventService.getList();
+        List<EventResponseDTO> res = events.stream().map(eventMapper::toResponse).toList();
+        ApiResponse<List<EventResponseDTO>> response = ApiResponse.<List<EventResponseDTO>>builder()
+                .success(true)
+                .code(200)
+                .data(res)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

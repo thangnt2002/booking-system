@@ -36,7 +36,7 @@ spring:
       indent-output: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9094
     consumer:
       group-id: event-group
 
@@ -50,3 +50,6 @@ spring:
         spring.json.use.type.headers: true
         spring.json.type.mapping: "ticketStockMsg:com.booking.eventservice.event.TicketStockEvent"
 
+app:
+  security:
+    cursor-secret-key: mwjzowfpyvrkgjax

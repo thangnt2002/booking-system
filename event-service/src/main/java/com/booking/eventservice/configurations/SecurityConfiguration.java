@@ -25,7 +25,8 @@ public class SecurityConfiguration {
             "/events/{id}",
             "/tickets/create",
             "/tickets/{id}",
-            "/internal/**"
+            "/internal/**",
+            "/events/list"
     };
 
     @Autowired
@@ -67,7 +68,7 @@ public class SecurityConfiguration {
     @Bean
     CorsFilter corsFilter(){
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedOrigin("http://localhost:4200");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
 
