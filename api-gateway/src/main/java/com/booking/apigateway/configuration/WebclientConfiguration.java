@@ -20,7 +20,7 @@ public class WebclientConfiguration {
     @Bean
     WebClient webClient(){
         return WebClient.builder()
-                .baseUrl(authenticationDomain)
+                .baseUrl(authenticationDomain+"/identity")
                 .build();
     }
 

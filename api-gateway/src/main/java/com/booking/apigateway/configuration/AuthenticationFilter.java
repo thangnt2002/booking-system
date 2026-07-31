@@ -45,6 +45,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     String[] publicEndpoints = {"/identity/auth/login",
             "/identity/users/registrations",
             "/notification/email/send",
+            "/event/events/list"
     };
 
     @Override
@@ -67,8 +68,9 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublicEndpoint(ServerHttpRequest request){
+        String path = request.getURI().getPath();
         return Arrays.stream(publicEndpoints).anyMatch(s ->
-           request.getURI().getPath().matches(apiPrefix + s)
+            path.equals(apiPrefix + s) || path.startsWith(apiPrefix + s + "/")
         );
     }
 
