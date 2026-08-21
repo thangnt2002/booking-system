@@ -10,7 +10,7 @@ import com.booking.identityservice.dto.response.AuthenticationResponse;
 import java.text.ParseException;
 
 public interface AuthenticationService {
-    String authenticate(AuthenticationRequest request);
+    AuthenticationResponse authenticate(AuthenticationRequest request);
 
     boolean introspectToken(IntrospectTokenRequest request)  throws JOSEException, ParseException;
 

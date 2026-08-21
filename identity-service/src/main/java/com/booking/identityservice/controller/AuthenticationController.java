@@ -29,13 +29,10 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     private ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request){
+        var response = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder()
                 .success(true)
-                .data(AuthenticationResponse
-                        .builder()
-                        .isAuthenticated(true)
-                        .token(authenticationService.authenticate(request))
-                        .build())
+                .data(response)
                 .build();
     }
 
