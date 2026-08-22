@@ -1,7 +1,6 @@
 package com.booking.identityservice.configuration;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,14 +22,14 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-    private String[] PUBLIC_ENDPOINT = { "/auth/login" ,"/auth/token",
+    private final String[] PUBLIC_ENDPOINT = { "/auth/login" ,"/auth/token",
             "/auth/introspect", "/auth/logout", "/users/registrations"};
-
-    @Value("${jwt.signerkey}")
-    private String SIGNER_KEY;
 
     @Autowired
     private CustomJWTDecoder customJWTDecoder;
+
+    @Autowired
+    private CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -38,11 +37,11 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests(request ->
                 request.requestMatchers(
                         HttpMethod.POST, PUBLIC_ENDPOINT).permitAll()
-//                        .requestMatchers("/admin")
-//                        .hasAuthority("ROLE_ADMIN")
-//                        .hasRole(Role.ADMIN.name())
+                        .requestMatchers("/admin/**")
+                        .hasAuthority("ROLE_ADMIN")
+//                        .hasRole(RoleName.ADMIN.name())
                         .anyRequest().authenticated()
-                );
+                ).exceptionHandling(ex -> ex.accessDeniedHandler(customAccessDeniedHandler));
 
         // security for jwt
         http.oauth2ResourceServer(
@@ -65,16 +64,6 @@ public class SecurityConfiguration {
         converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return converter;
     }
-
-//    @Bean
-//    JwtDecoder decoder(){
-//        // algorithm is based on the algorithm that was used to encrypt this token.
-//        SecretKeySpec secretKey = new SecretKeySpec(SIGNER_KEY.getBytes(), "HS512");
-//        return NimbusJwtDecoder
-//                .withSecretKey(secretKey)
-//                .macAlgorithm(MacAlgorithm.HS512)
-//                .build();
-//    }
 
     @Bean
     CorsFilter corsFilter(){

@@ -12,6 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "token")
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,7 +24,7 @@ public class Token {
     @Column(name = "is_revoked", nullable = false)
     boolean isRevoked;
 
-    @Column(name = "revoked_at", nullable = false)
+    @Column(name = "revoked_at")
     Date revokedAt;
 
     @Column(name = "expiry_time", nullable = false)

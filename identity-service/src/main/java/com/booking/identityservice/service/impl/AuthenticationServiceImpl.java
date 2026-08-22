@@ -161,12 +161,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return null;
     }
 
-    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+    @Override
+    public SignedJWT verifyToken(String token) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
         SignedJWT signedJWT = SignedJWT.parse(token);
         Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
         boolean verified = signedJWT.verify(verifier);
-        if (!(verified || expiryTime.before(new Date()))) {
+        if (!verified || expiryTime.before(new Date())) {
             throw new UnauthorizedException(ErrorCode.UN_AUTHORIZE.getCode());
         }
 
@@ -232,7 +233,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String refreshToken = generateRefreshToken(user);
             SignedJWT signedRefreshToken;
             signedRefreshToken = SignedJWT.parse(refreshToken);
-            tokenService.createRefreshToken(signedRefreshToken.getJWTClaimsSet().getJWTID(), user);
+            Date expiryTime = signedRefreshToken.getJWTClaimsSet().getExpirationTime();
+            tokenService.createRefreshToken(signedRefreshToken.getJWTClaimsSet().getJWTID(), user, expiryTime);
             return new AuthenticationResponse(true, generateAccessToken(user), refreshToken);
         } catch (ParseException e) {
             log.error("GENERATE TOKEN RESPONSE ERR: {}", e.getMessage());

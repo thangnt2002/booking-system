@@ -1,16 +1,21 @@
 package com.booking.identityservice.configuration;
 
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jose.JOSEException;
 import com.booking.identityservice.service.AuthenticationService;
+import com.booking.identityservice.exception.NotFoundException;
+import com.booking.identityservice.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
+import java.util.Objects;
 
 @Component
 public class CustomJWTDecoder implements JwtDecoder {
@@ -24,38 +29,18 @@ public class CustomJWTDecoder implements JwtDecoder {
 
     @Override
     public Jwt decode(String token) throws JwtException {
-//        try {
-//            var response = authenticationService.introspectToken(IntrospectTokenRequest
-//                    .builder()
-//                    .token(token)
-//                    .build());
-//            if(!response.getData().isValid()){
-//                throw new JwtException("Token invalid");
-//            }
-//        } catch (JOSEException e) {
-//            throw new RuntimeException(e);
-//        } catch (ParseException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        if(Objects.isNull(nimbusJwtDecoder)){
-//            SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");
-//            nimbusJwtDecoder = NimbusJwtDecoder
-//                    .withSecretKey(secretKeySpec)
-//                    .macAlgorithm(MacAlgorithm.HS512)
-//                    .build();
-//        }
-//        return nimbusJwtDecoder.decode(token);
         try {
-            SignedJWT jwt = SignedJWT.parse(token);
-            return new Jwt(token,
-                    jwt.getJWTClaimsSet().getIssueTime().toInstant(),
-                    jwt.getJWTClaimsSet().getExpirationTime().toInstant(),
-                    jwt.getHeader().toJSONObject(),
-                    jwt.getJWTClaimsSet().toJSONObject()
-            );
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+            authenticationService.verifyToken(token);
+        } catch (JOSEException | ParseException | UnauthorizedException | NotFoundException e) {
+            throw new JwtException("Invalid JWT", e);
         }
+        if(Objects.isNull(nimbusJwtDecoder)){
+            SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");
+            nimbusJwtDecoder = NimbusJwtDecoder
+                    .withSecretKey(secretKeySpec)
+                    .macAlgorithm(MacAlgorithm.HS512)
+                    .build();
+        }
+        return nimbusJwtDecoder.decode(token);
     }
 }

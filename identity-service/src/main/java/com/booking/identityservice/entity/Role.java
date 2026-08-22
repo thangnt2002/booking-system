@@ -7,12 +7,13 @@ import lombok.experimental.FieldDefaults;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "roles")
+@Table(name = "role")
 public class Role {
     @Id
     String name;

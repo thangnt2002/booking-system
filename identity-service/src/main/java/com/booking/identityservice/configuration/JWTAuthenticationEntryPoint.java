@@ -2,7 +2,6 @@ package com.booking.identityservice.configuration;
 
 import com.booking.identityservice.dto.ApiResponse;
 import com.booking.identityservice.exception.ErrorCode;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -15,7 +14,7 @@ import java.io.IOException;
 public class JWTAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
-            throws IOException, ServletException {
+            throws IOException {
         ErrorCode error = ErrorCode.UN_AUTHORIZE;
         ApiResponse<?> apiResponse = ApiResponse.builder()
                 .success(false)

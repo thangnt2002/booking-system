@@ -7,5 +7,5 @@ import java.util.Date;
 
 public interface TokenService {
     int deleteByExpiryTimeBefore(Date date);
-    Token createRefreshToken(String tokenId, User user);
+    Token createRefreshToken(String tokenId, User user, Date expiryTime);
 }

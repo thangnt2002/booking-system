@@ -26,10 +26,11 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     @Transactional
-    public Token createRefreshToken(String tokenId, User user) {
+    public Token createRefreshToken(String tokenId, User user, Date expiryTime) {
         Token token = Token.builder()
                 .jti(tokenId)
                 .isRevoked(false)
+                .expiryTime(expiryTime)
                 .user(user)
                 .createdAt(new Date()).build();
         return tokenRepository.save(token);

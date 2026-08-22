@@ -7,7 +7,7 @@ server:
 spring:
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9094
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -37,10 +37,26 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
 
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6319
+      password: ""
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 5
+      connect-timeout: 30000
+
+  jackson:
+    serialization:
+      indent-output: true
+
 jwt:
   signerkey: 5517010be55559740935ff533f504ec82054e3b73df043a3a141578470ff13bc;
-  valid-duration: 50000
-  refreshable-duration: 100000
+  valid-duration: 900 # by seconds
+  refreshable-duration: 7 #by days
 app:
   service:
     profile: http://localhost:8082/profile

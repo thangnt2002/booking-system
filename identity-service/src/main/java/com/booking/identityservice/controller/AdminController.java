@@ -17,7 +17,7 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin-data")
-    private ApiResponse<Object> login(){
+    private ApiResponse<Object> adminData(){
         return ApiResponse.builder()
                 .code(200)
                 .success(true)
