@@ -1,5 +1,6 @@
 package com.booking.identityservice.service.impl;
 
+import com.booking.identityservice.distributed.RedisInfraService;
 import com.booking.identityservice.service.TokenService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -31,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
@@ -46,7 +49,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     UserRepository userRepository;
     TokenRepository tokenRepository;
-    private final TokenService tokenService;
+    TokenService tokenService;
+    RedisInfraService redisInfraService;
 
     @NonFinal
     @Value("${jwt.signerkey}")
@@ -82,10 +86,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         try {
             String accessToken = request.getAccessToken();
             String refreshToken = request.getRefreshToken();
-            if(accessToken != null){
+            if (accessToken != null) {
                 verifyToken(accessToken);
             }
-            if(accessToken != null){
+            if (accessToken != null) {
                 verifyToken(refreshToken);
             }
         } catch (UnauthorizedException e) {
@@ -177,8 +181,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         String tokenType = signedJWT.getJWTClaimsSet().getClaimAsString(TOKEN_TYPE);
-        if (REFRESH.equals(tokenType)) {
+        if (ACCESS.equals(tokenType)) {
             //TODO check black list in redis
+        } else {
             Token refreshToken = tokenRepository.findByJti(signedJWT.getJWTClaimsSet().getJWTID())
                     .orElseThrow(() -> new UnauthorizedException(ErrorCode.UN_AUTHORIZE.getCode()));
             if (refreshToken.isRevoked()) {
@@ -215,11 +220,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private void invalidateToken(String tokenString) throws ParseException, JOSEException {
         SignedJWT token = verifyToken(tokenString);
+        String jti = token.getJWTClaimsSet().getJWTID();
         String tokenType = token.getJWTClaimsSet().getClaimAsString(TOKEN_TYPE);
-        if(ACCESS.equals(tokenType)){
-            //TODO add access token to redis
+
+        if (ACCESS.equals(tokenType)) {
+            Instant now = Instant.now();
+            Instant expiryInstant = token.getJWTClaimsSet().getExpirationTime().toInstant();
+            Duration remainingDuration = Duration.between(now, expiryInstant);
+            long ttlInSeconds = Math.max(0, remainingDuration.getSeconds());
+            // save to blacklist with ttl = remaining valid duration
+            redisInfraService.setObject(jti, jti, ttlInSeconds);
+            log.info("Invalidating token {} ...", jti.substring(0, jti.length() / 2));
         } else {
-            String jti = token.getJWTClaimsSet().getJWTID();
             tokenRepository.save(Token.builder()
                     .id(jti)
                     .isRevoked(true)

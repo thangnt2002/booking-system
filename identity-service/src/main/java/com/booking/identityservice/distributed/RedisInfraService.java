@@ -6,13 +6,13 @@ public interface RedisInfraService {
 
     RedisTemplate<Object, Object> getRedisTemplate();
 
-    void setObject(String key, Object value);
+    void setObject(String key, Object value, long ttl);
 
     <T> T getObject(String key, Class<T> targetClass);
 
     void delete(String key);
 
-    void setInt(String key, int value);
+    void setInt(String key, int value, long ttl);
 
     int getInt(String key);
 }

@@ -25,9 +25,13 @@ public class RedisInfraServiceImpl implements RedisInfraService {
     }
 
     @Override
-    public void setObject(String key, Object value) {
+    public void setObject(String key, Object value, long ttl) {
         if(!StringUtils.hasLength(key)){
             log.info("Set key failed!");
+            return;
+        }
+        if(ttl <= 0){
+            log.info("TTL = 0. Set key failed for {}!", key);
             return;
         }
         try{
@@ -63,7 +67,12 @@ public class RedisInfraServiceImpl implements RedisInfraService {
     }
 
     @Override
-    public void setInt(String key, int value) {
+    public void setInt(String key, int value, long ttl)
+    {
+        if(ttl <= 0){
+            log.info("TTL = 0. Set key failed for {}!", key);
+            return;
+        }
         redisTemplate.opsForValue().set(key, value);
     }
 
