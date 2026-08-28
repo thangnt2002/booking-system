@@ -182,12 +182,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String tokenType = signedJWT.getJWTClaimsSet().getClaimAsString(TOKEN_TYPE);
         if (ACCESS.equals(tokenType)) {
-            //TODO check black list in redis
+            String jti = signedJWT.getJWTClaimsSet().getJWTID();
+            String cachedToken = redisInfraService.getObject(jti, String.class);
+            if(cachedToken != null){
+                log.info("REVOKED ACCESS TOKEN: {} IS USING...", jti);
+                throw new UnauthorizedException(ErrorCode.UN_AUTHORIZE.getCode());
+            }
         } else {
             Token refreshToken = tokenRepository.findByJti(signedJWT.getJWTClaimsSet().getJWTID())
                     .orElseThrow(() -> new UnauthorizedException(ErrorCode.UN_AUTHORIZE.getCode()));
             if (refreshToken.isRevoked()) {
-                log.info("REVOKED TOKEN: {} IS USING...", refreshToken.getJti());
+                log.info("REVOKED REFRESH TOKEN: {} IS USING...", refreshToken.getJti());
                 throw new UnauthorizedException(ErrorCode.UN_AUTHORIZE.getCode());
             }
         }
