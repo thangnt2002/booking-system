@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -12,14 +13,14 @@ import java.util.Date;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "token")
+@Table(name = "tokens")
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
+    UUID id;
 
     @Column(name = "jti", nullable = false, unique = true)
-    String jti;
+    UUID jti;
 
     @Column(name = "is_revoked", nullable = false)
     boolean isRevoked;

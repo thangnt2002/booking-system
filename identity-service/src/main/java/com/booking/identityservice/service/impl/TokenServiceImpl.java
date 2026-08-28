@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     @Transactional
-    public Token createRefreshToken(String tokenId, User user, Date expiryTime) {
+    public Token createRefreshToken(UUID tokenId, User user, Date expiryTime) {
         Token token = Token.builder()
                 .jti(tokenId)
                 .isRevoked(false)

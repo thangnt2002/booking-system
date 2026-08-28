@@ -15,7 +15,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "permission")
+@Table(name = "permissions")
 public class Permission {
     @Id
     String name;

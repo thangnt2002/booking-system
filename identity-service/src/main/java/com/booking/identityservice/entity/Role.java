@@ -13,7 +13,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "role")
+@Table(name = "roles")
 public class Role {
     @Id
     String name;

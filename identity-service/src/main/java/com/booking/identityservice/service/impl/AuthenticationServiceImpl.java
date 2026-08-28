@@ -104,7 +104,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Date now = new Date();
         JWTClaimsSet claimsSet = new JWTClaimsSet
                 .Builder()
-                .subject(user.getId())
+                .subject(user.getId().toString())
                 .issuer("thangnt.com")
                 .issueTime(now)
                 .expirationTime(Date.from(now.toInstant().plus(VALID_DURATION, ChronoUnit.SECONDS)))
@@ -130,7 +130,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Date now = new Date();
         JWTClaimsSet claimsSet = new JWTClaimsSet
                 .Builder()
-                .subject(user.getId())
+                .subject(user.getId().toString())
                 .issuer("thangnt.com")
                 .issueTime(now)
                 .expirationTime(Date.from(now.toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.DAYS)))
@@ -225,7 +225,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private void invalidateToken(String tokenString) throws ParseException, JOSEException {
         SignedJWT token = verifyToken(tokenString);
-        String jti = token.getJWTClaimsSet().getJWTID();
+        String jtiString = token.getJWTClaimsSet().getJWTID();
+        UUID jti = UUID.fromString(jtiString);
         String tokenType = token.getJWTClaimsSet().getClaimAsString(TOKEN_TYPE);
 
         if (ACCESS.equals(tokenType)) {
@@ -234,8 +235,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             Duration remainingDuration = Duration.between(now, expiryInstant);
             long ttlInSeconds = Math.max(0, remainingDuration.getSeconds());
             // save to blacklist with ttl = remaining valid duration
-            redisInfraService.setObject(jti, jti, ttlInSeconds);
-            log.info("Invalidating token {} ...", jti.substring(0, jti.length() / 2));
+            redisInfraService.setObject(jti.toString(), jti, ttlInSeconds);
+            log.info("Invalidating token {} ...", jtiString.substring(0, jtiString.length() / 2));
         } else {
             tokenRepository.save(Token.builder()
                     .id(jti)
@@ -251,7 +252,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             SignedJWT signedRefreshToken;
             signedRefreshToken = SignedJWT.parse(refreshToken);
             Date expiryTime = signedRefreshToken.getJWTClaimsSet().getExpirationTime();
-            tokenService.createRefreshToken(signedRefreshToken.getJWTClaimsSet().getJWTID(), user, expiryTime);
+            String jtiString = signedRefreshToken.getJWTClaimsSet().getJWTID();
+            UUID refTokenId = UUID.fromString(jtiString);
+            tokenService.createRefreshToken(refTokenId, user, expiryTime);
             return new AuthenticationResponse(true, generateAccessToken(user), refreshToken);
         } catch (ParseException e) {
             log.error("GENERATE TOKEN RESPONSE ERR: {}", e.getMessage());
