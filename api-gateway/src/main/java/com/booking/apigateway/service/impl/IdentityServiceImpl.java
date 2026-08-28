@@ -23,7 +23,7 @@ public class IdentityServiceImpl implements IdentityService {
 
     public Mono<ApiResponse<IntrospectTokenResponse>> introspectToken(String token){
         return identityClient.introspectToken(IntrospectTokenRequest.builder()
-                .token(token)
+                .accessToken(token)
                 .build());
     }
 }
