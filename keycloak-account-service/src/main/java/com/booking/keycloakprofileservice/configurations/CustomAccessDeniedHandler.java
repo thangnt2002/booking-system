@@ -1,0 +1,37 @@
+package com.booking.keycloakprofileservice.configurations;
+
+import com.booking.keycloakprofileservice.dto.ApiResponse;
+import com.booking.keycloakprofileservice.exception.ErrorCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
+import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+@Component
+public class CustomAccessDeniedHandler implements AccessDeniedHandler {
+
+    @Override
+    public void handle(@NonNull HttpServletRequest request, HttpServletResponse response,
+                       @NonNull AccessDeniedException accessDeniedException) throws IOException {
+
+        ErrorCode error = ErrorCode.FORBIDDEN;
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .code(error.getCode())
+                .message(error.getMessage())
+                .success(false)
+                .build();
+
+        response.setStatus(error.getStatusCode().value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+    }
+}
