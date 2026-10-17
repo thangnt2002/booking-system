@@ -1,10 +1,9 @@
-package com.booking.keycloakprofileservice.exception;
+package com.booking.common.exceptions;
 
-import com.booking.keycloakprofileservice.dto.ApiResponse;
+import com.booking.common.dtos.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -49,17 +48,6 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .build();
         return ResponseEntity.status(ErrorCode.USER_NOT_FOUND.getStatusCode()).body(apiResponse);
-    }
-
-    @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<ApiResponse> AccessDeniedExceptionHandler(AccessDeniedException exception){
-        ErrorCode error = ErrorCode.FORBIDDEN;
-        ApiResponse apiResponse = ApiResponse.builder()
-                .code(error.getCode())
-                .message(error.getMessage())
-                .success(false)
-                .build();
-        return ResponseEntity.status(ErrorCode.FORBIDDEN.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)

@@ -1,6 +1,6 @@
-package com.booking.keycloakprofileservice.exception;
+package com.booking.common.exceptions;
 
-import com.booking.keycloakprofileservice.common.Constant;
+import com.booking.common.utils.Constant;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -20,7 +20,6 @@ public enum ErrorCode {
         this.message = message;
         this.statusCode = statusCode;
     }
-
 
     private int code;
     private String message;

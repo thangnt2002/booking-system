@@ -1,6 +1,6 @@
-package com.booking.keycloakprofileservice.configurations;
+package com.booking.common.configurations;
 
-import com.booking.keycloakprofileservice.entities.UserPrincipal;
+import com.booking.common.entities.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;

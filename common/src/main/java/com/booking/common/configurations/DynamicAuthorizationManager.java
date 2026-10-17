@@ -1,4 +1,4 @@
-package com.booking.keycloakprofileservice.configurations;
+package com.booking.common.configurations;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.jspecify.annotations.Nullable;

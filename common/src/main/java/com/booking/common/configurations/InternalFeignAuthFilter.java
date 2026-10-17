@@ -1,4 +1,4 @@
-package com.booking.keycloakprofileservice.configurations;
+package com.booking.common.configurations;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-import static com.booking.keycloakprofileservice.common.Constant.APP_INTERNAL_HEADER;
-import static com.booking.keycloakprofileservice.common.Constant.VALID_INTERNAL_KEY_ATTRIBUTE;
+import static com.booking.common.utils.Constant.APP_INTERNAL_HEADER;
+import static com.booking.common.utils.Constant.VALID_INTERNAL_KEY_ATTRIBUTE;
 
 @Slf4j
 @Component

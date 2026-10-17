@@ -1,7 +1,7 @@
-package com.booking.keycloakprofileservice.configurations;
+package com.booking.common.configurations;
 
-import com.booking.keycloakprofileservice.dto.ApiResponse;
-import com.booking.keycloakprofileservice.exception.ErrorCode;
+import com.booking.common.dtos.ApiResponse;
+import com.booking.common.exceptions.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

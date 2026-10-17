@@ -1,4 +1,4 @@
-package com.booking.keycloakprofileservice.exception;
+package com.booking.common.exceptions;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

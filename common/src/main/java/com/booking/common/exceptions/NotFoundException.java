@@ -1,4 +1,4 @@
-package com.booking.keycloakprofileservice.exception;
+package com.booking.common.exceptions;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +9,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class BusinessException extends RuntimeException{
+public class NotFoundException extends RuntimeException{
     private int code;
 }

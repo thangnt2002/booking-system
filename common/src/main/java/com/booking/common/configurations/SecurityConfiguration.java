@@ -1,4 +1,4 @@
-package com.booking.keycloakprofileservice.configurations;
+package com.booking.common.configurations;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.booking.keycloakprofileservice.common.Constant.VALID_INTERNAL_KEY_ATTRIBUTE;
+import static com.booking.common.utils.Constant.VALID_INTERNAL_KEY_ATTRIBUTE;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
