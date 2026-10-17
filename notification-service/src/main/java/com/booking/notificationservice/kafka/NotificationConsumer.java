@@ -1,7 +1,7 @@
 package com.booking.notificationservice.kafka;
 
-import com.booking.notificationservice.dto.requests.SendEmail;
-import com.booking.notificationservice.dto.requests.email.Recipient;
+import com.booking.notificationservice.dtos.requests.SendEmail;
+import com.booking.notificationservice.dtos.requests.email.Recipient;
 import com.booking.notificationservice.event.NotificationMsg;
 import com.booking.notificationservice.services.EmailService;
 import lombok.AccessLevel;

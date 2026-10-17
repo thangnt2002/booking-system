@@ -4,6 +4,9 @@ server:
     context-path: /notification
 
 spring:
+  app-name: booking_system_realm
+  application:
+    name: booking-notification-service
 
   kafka:
     bootstrap-servers: localhost:9094
@@ -19,3 +22,26 @@ spring:
         spring.json.trusted.packages: "*"
         spring.json.value.default.type: "com.booking.notificationservice.event.NotificationMsg"
         spring.json.use.type.headers: false
+
+  security:
+    keycloak:
+      base-url: http://localhost:9999
+
+app:
+  internal:
+    key: key
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+keycloak:
+  auth-server-url: http://localhost:9999
+  realm: master
+  client-id: admin-cli
+  principal-attribute: preferred_username
+  bearer-only: true
+  admin:
+    username: admin
+    password: bitnami123

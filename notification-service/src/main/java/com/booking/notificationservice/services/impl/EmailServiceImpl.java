@@ -1,10 +1,10 @@
 package com.booking.notificationservice.services.impl;
 
-import com.booking.notificationservice.dto.requests.SendEmail;
-import com.booking.notificationservice.dto.requests.email.EmailRequest;
-import com.booking.notificationservice.dto.requests.email.Sender;
-import com.booking.notificationservice.dto.responses.EmailResponse;
-import com.booking.notificationservice.repositories.httpclient.EmailClient;
+import com.booking.notificationservice.dtos.requests.SendEmail;
+import com.booking.notificationservice.dtos.requests.email.EmailRequest;
+import com.booking.notificationservice.dtos.requests.email.Sender;
+import com.booking.notificationservice.dtos.responses.EmailResponse;
+import com.booking.notificationservice.clients.EmailClient;
 import com.booking.notificationservice.services.EmailService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

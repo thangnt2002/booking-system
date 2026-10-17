@@ -1,4 +1,4 @@
-package com.booking.notificationservice.dto.responses;
+package com.booking.notificationservice.dtos.responses;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

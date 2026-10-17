@@ -1,5 +1,6 @@
-package com.booking.notificationservice.dto.requests.email;
+package com.booking.notificationservice.dtos.requests;
 
+import com.booking.notificationservice.dtos.requests.email.Recipient;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,9 +11,8 @@ import java.util.List;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-public class EmailRequest {
+public class SendEmail {
     String htmlContent;
     String subject;
-    Sender sender;
     List<Recipient> to;
 }
