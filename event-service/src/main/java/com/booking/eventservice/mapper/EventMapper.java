@@ -1,8 +1,8 @@
 package com.booking.eventservice.mapper;
 
-import com.booking.eventservice.dto.cache.EventCache;
-import com.booking.eventservice.dto.request.EventRequestDTO;
-import com.booking.eventservice.dto.response.EventResponseDTO;
+import com.booking.eventservice.dtos.cache.EventCache;
+import com.booking.eventservice.dtos.request.EventRequestDTO;
+import com.booking.eventservice.dtos.response.EventResponseDTO;
 import com.booking.eventservice.entity.Event;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

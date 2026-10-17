@@ -3,7 +3,7 @@ package com.booking.eventservice.cache;
 import com.booking.eventservice.distributed.RedisDistributedLocker;
 import com.booking.eventservice.distributed.RedisDistributedService;
 import com.booking.eventservice.distributed.RedisInfraService;
-import com.booking.eventservice.dto.cache.EventCache;
+import com.booking.eventservice.dtos.cache.EventCache;
 import com.booking.eventservice.entity.Event;
 import com.booking.eventservice.repository.EventRepository;
 import com.google.common.cache.Cache;

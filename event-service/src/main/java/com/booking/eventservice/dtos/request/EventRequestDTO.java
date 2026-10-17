@@ -1,4 +1,4 @@
-package com.booking.eventservice.dto.response;
+package com.booking.eventservice.dtos.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EventResponseDTO {
-    String id;
+public class EventRequestDTO {
 
     String name;
 
@@ -25,6 +24,4 @@ public class EventResponseDTO {
     String location;
 
     String poster;
-
-    Long version;
 }

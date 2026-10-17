@@ -1,8 +1,8 @@
 package com.booking.eventservice.controller;
 
-import com.booking.eventservice.dto.ApiResponse;
-import com.booking.eventservice.dto.request.TicketRequestDTO;
-import com.booking.eventservice.dto.response.TicketResponseDTO;
+import com.booking.common.dtos.ApiResponse;
+import com.booking.eventservice.dtos.request.TicketRequestDTO;
+import com.booking.eventservice.dtos.response.TicketResponseDTO;
 import com.booking.eventservice.entity.Ticket;
 import com.booking.eventservice.mapper.TicketMapper;
 import com.booking.eventservice.service.TicketService;

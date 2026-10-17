@@ -1,7 +1,7 @@
 package com.booking.eventservice.controller.internal;
 
-import com.booking.eventservice.dto.ApiResponse;
-import com.booking.eventservice.dto.response.TicketResponseDTO;
+import com.booking.common.dtos.ApiResponse;
+import com.booking.eventservice.dtos.response.TicketResponseDTO;
 import com.booking.eventservice.service.TicketService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

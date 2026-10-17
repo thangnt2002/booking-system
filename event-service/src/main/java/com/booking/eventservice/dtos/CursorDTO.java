@@ -1,4 +1,4 @@
-package com.booking.eventservice.dto;
+package com.booking.eventservice.dtos;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

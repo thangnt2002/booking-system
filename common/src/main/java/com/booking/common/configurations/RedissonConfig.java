@@ -1,4 +1,4 @@
-package com.booking.eventservice.configurations;
+package com.booking.common.configurations;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

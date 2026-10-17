@@ -1,14 +1,14 @@
 package com.booking.eventservice.service.impl;
 
 import com.booking.eventservice.cache.EventCacheService;
-import com.booking.eventservice.dto.CursorDTO;
-import com.booking.eventservice.dto.Page;
-import com.booking.eventservice.dto.cache.EventCache;
-import com.booking.eventservice.dto.request.EventRequestDTO;
-import com.booking.eventservice.dto.response.EventResponseDTO;
+import com.booking.eventservice.dtos.CursorDTO;
+import com.booking.eventservice.dtos.Page;
+import com.booking.eventservice.dtos.cache.EventCache;
+import com.booking.eventservice.dtos.request.EventRequestDTO;
+import com.booking.eventservice.dtos.response.EventResponseDTO;
 import com.booking.eventservice.entity.Event;
-import com.booking.eventservice.exception.BusinessException;
-import com.booking.eventservice.exception.ErrorCode;
+import com.booking.common.exceptions.BusinessException;
+import com.booking.common.exceptions.ErrorCode;
 import com.booking.eventservice.mapper.EventMapper;
 import com.booking.eventservice.repository.EventRepository;
 import com.booking.eventservice.service.CursorService;

@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = NotFoundException.class)
     ResponseEntity<ApiResponse> notFoundExceptionHandler(NotFoundException exception){
         ApiResponse apiResponse = ApiResponse.builder()
-                .code(exception.getCode())
+                .code(exception.getCode().getCode())
                 .message(exception.getMessage())
                 .success(false)
                 .build();

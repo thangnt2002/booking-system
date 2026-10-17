@@ -1,8 +1,8 @@
 package com.booking.eventservice.kafka.consumer;
 
 import com.booking.eventservice.event.TicketStockEvent;
-import com.booking.eventservice.exception.BusinessException;
-import com.booking.eventservice.exception.ErrorCode;
+import com.booking.common.exceptions.BusinessException;
+import com.booking.common.exceptions.ErrorCode;
 import com.booking.eventservice.service.IdempotencyKeyService;
 import com.booking.eventservice.service.TicketService;
 import lombok.AccessLevel;

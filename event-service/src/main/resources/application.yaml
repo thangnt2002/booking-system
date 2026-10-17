@@ -4,7 +4,9 @@ server:
     context-path: /event
 
 spring:
-
+  app-name: booking_system_realm
+  application:
+    name: booking-event-service
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=event-service;encrypt=true;trustServerCertificate=true;
     username: sa
@@ -50,6 +52,27 @@ spring:
         spring.json.use.type.headers: true
         spring.json.type.mapping: "ticketStockMsg:com.booking.eventservice.event.TicketStockEvent"
 
+  security:
+    keycloak:
+      base-url: http://localhost:9999
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+keycloak:
+  auth-server-url: http://localhost:9999
+  realm: master
+  client-id: admin-cli
+  principal-attribute: preferred_username
+  bearer-only: true
+  admin:
+    username: admin
+    password: bitnami123
+
 app:
   security:
     cursor-secret-key: mwjzowfpyvrkgjax
+  internal:
+    key: key

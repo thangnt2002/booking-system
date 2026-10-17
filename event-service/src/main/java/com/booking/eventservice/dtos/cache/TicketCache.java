@@ -1,4 +1,4 @@
-package com.booking.eventservice.dto.cache;
+package com.booking.eventservice.dtos.cache;
 
 import com.booking.eventservice.entity.Ticket;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package com.booking.eventservice.dto.request;
+package com.booking.eventservice.dtos.request;
 
 import com.booking.eventservice.enums.SellingType;
 import com.booking.eventservice.enums.TicketStatus;

@@ -1,9 +1,9 @@
 package com.booking.eventservice.service.impl;
 
 
-import com.booking.eventservice.dto.CursorDTO;
-import com.booking.eventservice.exception.BusinessException;
-import com.booking.eventservice.exception.ErrorCode;
+import com.booking.eventservice.dtos.CursorDTO;
+import com.booking.common.exceptions.BusinessException;
+import com.booking.common.exceptions.ErrorCode;
 import com.booking.eventservice.service.CursorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
