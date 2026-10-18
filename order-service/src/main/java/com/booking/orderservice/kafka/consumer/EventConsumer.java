@@ -1,13 +1,13 @@
 package com.booking.orderservice.kafka.consumer;
 
-import com.booking.orderservice.dto.response.TicketResponseDTO;
+import com.booking.orderservice.dtos.response.TicketResponseDTO;
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OutboxStatus;
 import com.booking.orderservice.event.TicketStockEvent;
 import com.booking.orderservice.outbox.entity.OutboxMessage;
 import com.booking.orderservice.repository.OrderRepository;
 import com.booking.orderservice.repository.OutboxRepository;
-import com.booking.orderservice.repository.http.EventClient;
+import com.booking.orderservice.clients.EventClient;
 import com.booking.orderservice.service.IdempotencyKeyService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

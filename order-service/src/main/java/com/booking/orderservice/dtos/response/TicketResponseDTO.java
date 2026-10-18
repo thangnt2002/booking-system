@@ -1,4 +1,4 @@
-package com.booking.orderservice.dto.response;
+package com.booking.orderservice.dtos.response;
 
 import com.booking.orderservice.enums.SellingType;
 import com.booking.orderservice.enums.TicketStatus;

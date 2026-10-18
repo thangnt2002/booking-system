@@ -3,8 +3,8 @@ package com.booking.orderservice.repository.impl;
 
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.enums.OrderStatus;
-import com.booking.orderservice.exception.BusinessException;
-import com.booking.orderservice.exception.ErrorCode;
+import com.booking.common.exceptions.BusinessException;
+import com.booking.common.exceptions.ErrorCode;
 import com.booking.orderservice.repository.OrderRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;

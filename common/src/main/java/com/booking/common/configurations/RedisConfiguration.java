@@ -1,4 +1,4 @@
-package com.booking.orderservice.configurations;
+package com.booking.common.configurations;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

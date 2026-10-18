@@ -1,12 +1,9 @@
 package com.booking.orderservice.controller;
 
 
-import com.booking.orderservice.dto.ApiResponse;
-import com.booking.orderservice.dto.CursorDTO;
-import com.booking.orderservice.dto.Page;
-import com.booking.orderservice.dto.response.OrderResponseDTO;
-import com.booking.orderservice.repository.OrderRepository;
-import com.booking.orderservice.service.CursorService;
+import com.booking.common.dtos.ApiResponse;
+import com.booking.orderservice.dtos.Page;
+import com.booking.orderservice.dtos.response.OrderResponseDTO;
 import com.booking.orderservice.service.OrderService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

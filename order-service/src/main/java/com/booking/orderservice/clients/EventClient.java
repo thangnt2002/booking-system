@@ -1,8 +1,8 @@
-package com.booking.orderservice.repository.http;
+package com.booking.orderservice.clients;
 
-import com.booking.orderservice.configurations.ClientAuthenRequestInterceptor;
-import com.booking.orderservice.dto.ApiResponse;
-import com.booking.orderservice.dto.response.TicketResponseDTO;
+import com.booking.common.configurations.ClientAuthenRequestInterceptor;
+import com.booking.common.dtos.ApiResponse;
+import com.booking.orderservice.dtos.response.TicketResponseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;

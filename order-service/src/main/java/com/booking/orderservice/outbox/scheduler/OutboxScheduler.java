@@ -26,7 +26,7 @@ public class OutboxScheduler {
     ObjectMapper objectMapper;
     EventProducer eventProducer;
 
-    @Scheduled(fixedDelay = 1000)
+//    @Scheduled(fixedDelay = 1000)
     public void publish() {
         publishRow();
     }

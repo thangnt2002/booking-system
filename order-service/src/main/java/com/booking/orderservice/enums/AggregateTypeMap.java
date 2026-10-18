@@ -2,8 +2,8 @@ package com.booking.orderservice.enums;
 
 import com.booking.orderservice.entity.Order;
 import com.booking.orderservice.event.TicketStockEvent;
-import com.booking.orderservice.exception.BusinessException;
-import com.booking.orderservice.exception.ErrorCode;
+import com.booking.common.exceptions.BusinessException;
+import com.booking.common.exceptions.ErrorCode;
 
 import java.util.Arrays;
 

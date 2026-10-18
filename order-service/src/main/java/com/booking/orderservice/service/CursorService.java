@@ -1,6 +1,6 @@
 package com.booking.orderservice.service;
 
-import com.booking.orderservice.dto.CursorDTO;
+import com.booking.orderservice.dtos.CursorDTO;
 
 import java.time.LocalDateTime;
 
