@@ -1,9 +1,7 @@
 package com.booking.orderservice.service.impl;
 
 import com.booking.orderservice.enums.OutboxStatus;
-import com.booking.common.exceptions.BusinessException;
-import com.booking.common.exceptions.ErrorCode;
-import com.booking.orderservice.outbox.entity.OutboxMessage;
+import com.booking.orderservice.entities.OutboxMessage;
 import com.booking.orderservice.repository.OutboxRepository;
 import com.booking.orderservice.service.OutboxService;
 import lombok.AccessLevel;

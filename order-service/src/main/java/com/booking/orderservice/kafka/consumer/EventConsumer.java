@@ -1,10 +1,10 @@
 package com.booking.orderservice.kafka.consumer;
 
 import com.booking.orderservice.dtos.response.TicketResponseDTO;
-import com.booking.orderservice.entity.Order;
+import com.booking.orderservice.entities.Order;
 import com.booking.orderservice.enums.OutboxStatus;
 import com.booking.orderservice.event.TicketStockEvent;
-import com.booking.orderservice.outbox.entity.OutboxMessage;
+import com.booking.orderservice.entities.OutboxMessage;
 import com.booking.orderservice.repository.OrderRepository;
 import com.booking.orderservice.repository.OutboxRepository;
 import com.booking.orderservice.clients.EventClient;
@@ -24,6 +24,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 import static com.booking.orderservice.common.Constant.PLACE_ORDER_TOPIC;
 import static com.booking.orderservice.common.Constant.TICKET_DECREASE_STOCK_TOPIC;
@@ -55,7 +56,7 @@ public class EventConsumer {
         }
 
         // create order
-        String ticketId = message.getTicketId();
+        UUID ticketId = message.getTicketId();
         message.setPrice(getEffectivePrice(ticketId));
         String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
         orderRepository.insertOrder(tableName, message);
@@ -74,7 +75,7 @@ public class EventConsumer {
         outboxRepository.save(outboxMessage);
     }
 
-    private BigDecimal getEffectivePrice(String ticketId) {
+    private BigDecimal getEffectivePrice(UUID ticketId) {
         TicketResponseDTO ticket = eventClient.findTicketById(ticketId).getData();
         if (ticket == null) return BigDecimal.valueOf(-1);
         if (ticket.getFlashPrice() != null && ticket.getFlashPrice().compareTo(BigDecimal.valueOf(0)) > 0) {

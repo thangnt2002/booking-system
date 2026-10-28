@@ -1,7 +1,7 @@
 package com.booking.orderservice.mapper;
 
 import com.booking.orderservice.dtos.response.OrderResponseDTO;
-import com.booking.orderservice.entity.Order;
+import com.booking.orderservice.entities.Order;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

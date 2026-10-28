@@ -1,10 +1,11 @@
-package com.booking.orderservice.outbox.entity;
+package com.booking.orderservice.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 public class IdempotencyKey {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
+    UUID id;
 
     @Column(name = "event_id", unique = true, nullable = false)
     String eventId;

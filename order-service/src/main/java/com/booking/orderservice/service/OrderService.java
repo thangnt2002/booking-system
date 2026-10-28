@@ -3,8 +3,10 @@ package com.booking.orderservice.service;
 import com.booking.orderservice.dtos.Page;
 import com.booking.orderservice.dtos.response.OrderResponseDTO;
 
+import java.util.UUID;
+
 public interface OrderService {
-    boolean order(String ticketId, int quantity);
+    boolean order(UUID ticketId, int quantity);
 
     boolean cancelOrder(String orderNumber);
 

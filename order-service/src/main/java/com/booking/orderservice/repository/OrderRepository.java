@@ -1,6 +1,6 @@
 package com.booking.orderservice.repository;
 
-import com.booking.orderservice.entity.Order;
+import com.booking.orderservice.entities.Order;
 import com.booking.orderservice.enums.OrderStatus;
 
 import java.time.LocalDateTime;

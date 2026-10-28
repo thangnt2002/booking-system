@@ -3,15 +3,13 @@ package com.booking.orderservice.outbox.scheduler;
 import com.booking.orderservice.enums.AggregateTypeMap;
 import com.booking.orderservice.enums.OutboxStatus;
 import com.booking.orderservice.kafka.producer.EventProducer;
-import com.booking.orderservice.outbox.entity.OutboxMessage;
+import com.booking.orderservice.entities.OutboxMessage;
 import com.booking.orderservice.service.OutboxService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;

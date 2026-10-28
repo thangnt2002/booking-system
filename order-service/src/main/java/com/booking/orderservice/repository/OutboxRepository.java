@@ -1,7 +1,7 @@
 package com.booking.orderservice.repository;
 
 import com.booking.orderservice.enums.OutboxStatus;
-import com.booking.orderservice.outbox.entity.OutboxMessage;
+import com.booking.orderservice.entities.OutboxMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

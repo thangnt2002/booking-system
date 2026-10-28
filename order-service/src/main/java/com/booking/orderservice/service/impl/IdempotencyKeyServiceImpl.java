@@ -1,6 +1,6 @@
 package com.booking.orderservice.service.impl;
 
-import com.booking.orderservice.outbox.entity.IdempotencyKey;
+import com.booking.orderservice.entities.IdempotencyKey;
 import com.booking.orderservice.repository.IdempotencyKeyRepository;
 import com.booking.orderservice.service.IdempotencyKeyService;
 import lombok.AccessLevel;

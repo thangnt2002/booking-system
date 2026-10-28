@@ -1,32 +1,38 @@
-package com.booking.orderservice.entity;
+package com.booking.orderservice.entities;
 
 
 import com.booking.orderservice.enums.OrderStatus;
 
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+@Entity
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "orders")
 public class Order {
-    String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    UUID id;
 
     String orderNumber;
 
-    String customerId;
+    UUID customerId;
 
     LocalDateTime orderDate;
 
     OrderStatus status;
 
-    String ticketId;
+    UUID ticketId;
 
     Integer quantity;
 

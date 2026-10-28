@@ -1,7 +1,7 @@
 package com.booking.orderservice.service;
 
 import com.booking.orderservice.enums.OutboxStatus;
-import com.booking.orderservice.outbox.entity.OutboxMessage;
+import com.booking.orderservice.entities.OutboxMessage;
 
 import java.util.List;
 

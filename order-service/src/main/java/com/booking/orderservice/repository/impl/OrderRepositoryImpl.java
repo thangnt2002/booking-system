@@ -1,7 +1,7 @@
 package com.booking.orderservice.repository.impl;
 
 
-import com.booking.orderservice.entity.Order;
+import com.booking.orderservice.entities.Order;
 import com.booking.orderservice.enums.OrderStatus;
 import com.booking.common.exceptions.BusinessException;
 import com.booking.common.exceptions.ErrorCode;

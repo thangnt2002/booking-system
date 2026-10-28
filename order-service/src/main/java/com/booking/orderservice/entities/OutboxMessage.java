@@ -1,11 +1,13 @@
-package com.booking.orderservice.outbox.entity;
+package com.booking.orderservice.entities;
 
 import com.booking.orderservice.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -17,15 +19,15 @@ import java.time.LocalDateTime;
 public class OutboxMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
+    UUID id;
 
     @Column(name = "aggregate_id")
-    String aggregateId;
+    UUID aggregateId;
 
     @Column(name = "aggregate_type")
     String aggregateType;
 
-    @Column(name = "event_id")
+    @Column(name = "event_type")
     String eventType;
 
     String topic;
@@ -38,8 +40,14 @@ public class OutboxMessage {
     OutboxStatus status;
 
     @Column(name = "created_at")
-    LocalDateTime createdAt;
+    Instant createdAt;
 
     @Column(name = "published_at")
-    LocalDateTime publishedAt;
+    Instant publishedAt;
+
+    @Column(name = "retry_count")
+    int retryCount;
+
+    @Column(name = "last_error")
+    String lastError;
 }
