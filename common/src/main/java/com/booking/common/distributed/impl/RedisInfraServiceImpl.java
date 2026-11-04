@@ -1,6 +1,6 @@
-package com.booking.eventservice.distributed.impl;
+package com.booking.common.distributed.impl;
 
-import com.booking.eventservice.distributed.RedisInfraService;
+import com.booking.common.distributed.RedisInfraService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

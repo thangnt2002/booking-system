@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/tickets")
@@ -37,7 +39,7 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<ApiResponse<TicketResponseDTO>> findById(@PathVariable("id") String id,
+    ResponseEntity<ApiResponse<TicketResponseDTO>> findById(@PathVariable("id") UUID id,
                                                            @RequestParam(name = "version", required = false) Long version
     ){
         TicketResponseDTO dto = ticketService.findTicketById(id, version);

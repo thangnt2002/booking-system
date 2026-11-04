@@ -6,18 +6,19 @@ import com.booking.eventservice.dtos.response.EventResponseDTO;
 import com.booking.eventservice.entity.Event;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface EventService {
 
     Event create (EventRequestDTO event);
 
-    Event findById (String id, Long version);
+    Event findById (UUID id, Long version);
 
-    Event update (String id, EventRequestDTO event);
+    Event update (UUID id, EventRequestDTO event);
 
     Event softDelete (String id);
 
-    EventResponseDTO findEventById(String id, Long version);
+    EventResponseDTO findEventById(UUID id, Long version);
 
     Page<EventResponseDTO> getCusrorPage(String cursor, int limit, String searchKey);
 

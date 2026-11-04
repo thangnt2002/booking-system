@@ -1,7 +1,7 @@
 package com.booking.eventservice.service.impl;
 
 import com.booking.eventservice.cache.TicketCacheService;
-import com.booking.eventservice.distributed.RedisInfraService;
+import com.booking.common.distributed.RedisInfraService;
 import com.booking.eventservice.dtos.cache.TicketCache;
 import com.booking.eventservice.dtos.request.TicketRequestDTO;
 import com.booking.eventservice.dtos.response.TicketResponseDTO;
@@ -23,8 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-import static com.booking.eventservice.common.Utils.genDistributedTicketStockAvailableKey;
+import static com.booking.common.utils.CacheKeyUtils.genDistributedTicketStockAvailableKey;
+
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +65,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public Ticket findById(String ticketId, Long version) {
+    public Ticket findById(UUID ticketId, Long version) {
         TicketCache ticketCache = getTicketFromCache(ticketId, version);
         return ticketMapper.fromCacheToEntity(ticketCache);
     }
@@ -74,12 +76,12 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public Ticket softDelete(String ticketId) {
+    public Ticket softDelete(UUID ticketId) {
         return null;
     }
 
     @Override
-    public TicketResponseDTO findTicketById(String ticketId, Long version) {
+    public TicketResponseDTO findTicketById(UUID ticketId, Long version) {
         TicketCache ticketCache = getTicketFromCache(ticketId, version);
         TicketResponseDTO dto = ticketMapper.toResponse(ticketCache.getTicket());
         dto.setVersion(ticketCache.getVersion());
@@ -88,7 +90,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public boolean reserveStock(String ticketId, int quantity) {
+    public boolean reserveStock(UUID ticketId, int quantity) {
         boolean isRedisDecremented = false;
         try {
             int deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
@@ -126,7 +128,7 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    private void warmCache(String ticketId) {
+    private void warmCache(UUID ticketId) {
         if (ticketId == null) {
             return;
         }
@@ -142,7 +144,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public boolean decreaseStock(String ticketId, int quantity) {
+    public boolean decreaseStock(UUID ticketId, int quantity) {
         int isDbDecremented = ticketRepository.decreaseStock(ticketId, quantity);
 
         try {
@@ -158,11 +160,11 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public boolean releaseStock(String ticketId, int quantity) {
+    public boolean releaseStock(UUID ticketId, int quantity) {
         return ticketCacheService.increaseStock(ticketId, quantity);
     }
 
-    private TicketCache getTicketFromCache(String id, Long version) {
+    private TicketCache getTicketFromCache(UUID id, Long version) {
         if (id == null) {
             return null;
         }

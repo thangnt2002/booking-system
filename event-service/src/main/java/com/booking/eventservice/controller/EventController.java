@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Slf4j
@@ -41,7 +42,7 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<ApiResponse<EventResponseDTO>> findById(@PathVariable("id") String id,
+    ResponseEntity<ApiResponse<EventResponseDTO>> findById(@PathVariable("id") UUID id,
                                                            @RequestParam(name = "version", required = false) Long version
     ) {
         EventResponseDTO dto = eventService.findEventById(id, version);
@@ -54,7 +55,7 @@ public class EventController {
     }
 
     @PutMapping("/update/{id}")
-    ResponseEntity<ApiResponse<EventResponseDTO>> update(@PathVariable("id") String id,
+    ResponseEntity<ApiResponse<EventResponseDTO>> update(@PathVariable("id") UUID id,
                                                          @RequestBody EventRequestDTO eventRequestDTO
     ) {
         Event event = eventService.update(id, eventRequestDTO);

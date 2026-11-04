@@ -1,8 +1,8 @@
 package com.booking.eventservice.cache;
 
-import com.booking.eventservice.distributed.RedisDistributedLocker;
-import com.booking.eventservice.distributed.RedisDistributedService;
-import com.booking.eventservice.distributed.RedisInfraService;
+import com.booking.common.distributed.RedisDistributedLocker;
+import com.booking.common.distributed.RedisDistributedService;
+import com.booking.common.distributed.RedisInfraService;
 import com.booking.eventservice.dtos.cache.EventCache;
 import com.booking.eventservice.entity.Event;
 import com.booking.eventservice.repository.EventRepository;
@@ -14,9 +14,10 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static com.booking.eventservice.common.Utils.*;
+import static com.booking.common.utils.CacheKeyUtils.*;
 
 @Service
 @Slf4j
@@ -34,7 +35,7 @@ public class EventCacheService {
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build();
 
-    public EventCache getEvent(String eventId, Long version) {
+    public EventCache getEvent(UUID eventId, Long version) {
         EventCache localCachedEvent = getEventFromLocalCache(eventId);
         if (localCachedEvent != null) {
             if (version == null ||
@@ -47,11 +48,11 @@ public class EventCacheService {
         return getEventFromDistributedCache(eventId);
     }
 
-    EventCache getEventFromLocalCache(String eventId) {
+    EventCache getEventFromLocalCache(UUID eventId) {
         return eventLocalCache.getIfPresent(genLocalCacheKey(Event.class ,eventId));
     }
 
-    EventCache getEventFromDistributedCache(String eventId) {
+    EventCache getEventFromDistributedCache(UUID eventId) {
         EventCache eventCache = redisInfraService.getObject(genDistributedCacheKey(Event.class, eventId), EventCache.class);
         if (eventCache == null) {
             log.info("NOT FOUND EVENT {} IN REDIS", eventId);
@@ -62,7 +63,7 @@ public class EventCacheService {
 
     }
 
-    EventCache getEventDB(String eventId) {
+    EventCache getEventDB(UUID eventId) {
         RedisDistributedLocker locker = redisDistributedService.getDistributedLock(genRequestLockKey(Event.class, eventId));
         try {
             boolean isLock = locker.tryLock(1, 5, TimeUnit.SECONDS);
@@ -90,7 +91,7 @@ public class EventCacheService {
 
     }
 
-    public void invalidateEvent(String eventId){
+    public void invalidateEvent(UUID eventId){
         eventLocalCache.invalidate(eventId);
         //TODO invalidate in other instances
         redisInfraService.delete(genDistributedCacheKey(Event.class, eventId));

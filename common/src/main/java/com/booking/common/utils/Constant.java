@@ -15,6 +15,7 @@ public class Constant {
     public static final String START_TIME_CANNOT_BE_IN_THE_PAST = "Start time cannot be in the past";
     public static final String INVALID_TIME_FORMAT = "Start time cannot be in the past";
     public static final String INVALID_TIME_LIMIT = "Invalid limit";
+    public static final String OUT_OF_STOCK = "Out of stock";
     public static final String BAD_REQUEST = "Bad request";
 
     // topic

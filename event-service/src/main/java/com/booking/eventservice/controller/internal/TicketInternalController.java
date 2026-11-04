@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/internal/tickets")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -20,7 +22,7 @@ public class TicketInternalController {
 
 
     @PostMapping("/{ticketId}/{quantity}/reserve")
-    public ResponseEntity<ApiResponse<Boolean>> reserveStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
+    public ResponseEntity<ApiResponse<Boolean>> reserveStock(@PathVariable("ticketId") UUID ticketId, @PathVariable("quantity") int quantity){
         boolean result = ticketService.reserveStock(ticketId, quantity);
         ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
                 .success(true)
@@ -31,7 +33,7 @@ public class TicketInternalController {
     }
 
     @PostMapping("/{ticketId}/{quantity}/release")
-    public ResponseEntity<ApiResponse<Boolean>> releaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
+    public ResponseEntity<ApiResponse<Boolean>> releaseStock(@PathVariable("ticketId") UUID ticketId, @PathVariable("quantity") int quantity){
         boolean result = ticketService.releaseStock(ticketId, quantity);
         ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
                 .success(true)
@@ -42,7 +44,7 @@ public class TicketInternalController {
     }
 
     @PostMapping("/{ticketId}/{quantity}/decrease")
-    public ResponseEntity<ApiResponse<Boolean>> decreaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity){
+    public ResponseEntity<ApiResponse<Boolean>> decreaseStock(@PathVariable("ticketId") UUID ticketId, @PathVariable("quantity") int quantity){
         boolean result = ticketService.decreaseStock(ticketId, quantity);
         ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
                 .success(true)
@@ -53,7 +55,7 @@ public class TicketInternalController {
     }
 
     @GetMapping("/{ticketId}")
-    ResponseEntity<ApiResponse<TicketResponseDTO>> findById(@PathVariable("ticketId") String ticketId,
+    ResponseEntity<ApiResponse<TicketResponseDTO>> findById(@PathVariable("ticketId") UUID ticketId,
                                                             @RequestParam(name = "version", required = false) Long version
     ){
         TicketResponseDTO dto = ticketService.findTicketById(ticketId, version);

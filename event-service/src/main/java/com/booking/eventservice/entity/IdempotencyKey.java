@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -17,10 +18,10 @@ import java.time.LocalDateTime;
 public class IdempotencyKey {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
+    UUID id;
 
     @Column(name = "event_id", unique = true, nullable = false)
-    String eventId;
+    UUID eventId;
 
     @Column(name = "processed_at", nullable = false)
     LocalDateTime processedAt;

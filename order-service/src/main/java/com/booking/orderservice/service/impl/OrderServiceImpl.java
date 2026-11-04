@@ -1,12 +1,14 @@
 package com.booking.orderservice.service.impl;
 
 
+import com.booking.common.services.StockViewService;
 import com.booking.orderservice.distributed.RedisDistributedLocker;
 import com.booking.orderservice.distributed.RedisDistributedService;
 import com.booking.orderservice.dtos.CursorDTO;
 import com.booking.orderservice.dtos.Page;
 import com.booking.orderservice.dtos.response.OrderResponseDTO;
-import com.booking.orderservice.entity.Order;
+import com.booking.orderservice.dtos.response.TicketResponseDTO;
+import com.booking.orderservice.entities.Order;
 import com.booking.orderservice.enums.OrderStatus;
 import com.booking.orderservice.enums.OutboxStatus;
 import com.booking.orderservice.event.TicketStockEvent;
@@ -14,7 +16,7 @@ import com.booking.common.exceptions.BusinessException;
 import com.booking.common.exceptions.ErrorCode;
 import com.booking.common.exceptions.NotFoundException;
 import com.booking.orderservice.mapper.OrderMapper;
-import com.booking.orderservice.outbox.entity.OutboxMessage;
+import com.booking.orderservice.entities.OutboxMessage;
 import com.booking.orderservice.repository.OrderRepository;
 import com.booking.orderservice.clients.EventClient;
 import com.booking.orderservice.service.CursorService;
@@ -26,18 +28,20 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.booking.common.utils.UserUtils.getCurrentUserId;
 import static com.booking.orderservice.common.Constant.*;
 import static com.booking.orderservice.common.Utils.genRequestLockKey;
 
@@ -53,74 +57,90 @@ public class OrderServiceImpl implements OrderService {
     CursorService cursorService;
     ObjectMapper objectMapper;
     OrderMapper orderMapper;
+    StockViewService stockViewService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean order(String ticketId, int quantity) {
-        boolean isDecrement = eventClient.reserveStock(ticketId, quantity).getData();
-        if (!isDecrement) {
-            log.error("Decrease failed for ticket id {}", ticketId);
-            throw new BusinessException(ErrorCode.SERVER_ERROR);
+    public boolean order(UUID ticketId, int quantity) {
+        // check redis
+        Long remaining = stockViewService.getRemaining(ticketId);
+        if (remaining != null && remaining < quantity) {
+            throw new BusinessException(ErrorCode.OUT_OF_STOCK);
         }
+
         try {
+         BigDecimal effectivePrice = getEffectivePrice(ticketId);
             // create order
             LocalDateTime now = LocalDateTime.now();
-            //TODO get id from securityContextHolders
-            String tempUserId = String.valueOf(UUID.randomUUID());
-            String orderNumber = String.format("BNB-HN-%s-%s-%s", tempUserId, ticketId, System.currentTimeMillis());
+            UUID userId = getCurrentUserId();
+            String orderNumber = String.format("BNB-HN-%s-%s-%s", userId, ticketId, System.currentTimeMillis());
             Order order = Order.builder()
-                    .customerId(tempUserId)
+                    .customerId(userId)
                     .orderNumber(orderNumber)
                     .ticketId(ticketId)
                     .status(OrderStatus.PENDING)
                     .quantity(quantity)
+                    .price(effectivePrice)
                     .orderDate(now)
                     .updatedAt(now)
                     .createdAt(now)
                     .build();
 
-            String jsonMsg = objectMapper.writeValueAsString(order);
+            TicketStockEvent ticketDecreaseStockEvent = new TicketStockEvent(ticketId, quantity);
+
+            String jsonMsg = objectMapper.writeValueAsString(ticketDecreaseStockEvent);
             OutboxMessage outboxMessage = OutboxMessage.builder()
-                    .topic(PLACE_ORDER_TOPIC)
-                    .aggregateType(Order.class.getSimpleName())
+                    .topic(TICKET_DECREASE_STOCK_TOPIC)
+                    .aggregateType(TicketStockEvent.class.getSimpleName())
                     .payload(jsonMsg)
-                    .eventType("placeOrderTopic")
-                    .createdAt(LocalDateTime.now())
+                    .eventType("decreaseStock")
+                    .createdAt(Instant.now())
                     .status(OutboxStatus.PENDING)
                     .build();
+
+            String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+            orderRepository.insertOrder(tableName, order);
 
             outboxService.save(outboxMessage);
             return true;
         } catch (Exception e) {
             log.error("Decrease failed for ticket id {}, err: {}", ticketId, e.getMessage());
-            buildErrorEvent(ticketId, quantity);
             throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    void buildErrorEvent(String ticketId, int quantity) {
-        TicketStockEvent event = TicketStockEvent.builder()
-                .ticketId(ticketId)
-                .quantity(quantity)
-                .build();
-        try {
-            String jsonMsg = objectMapper.writeValueAsString(event);
-            OutboxMessage outboxMessage = OutboxMessage.builder()
-                    .topic(TICKET_RESTOCK_TOPIC)
-                    .aggregateType(TicketStockEvent.class.getSimpleName())
-                    .payload(jsonMsg)
-                    .eventType("ticketRestock")
-                    .createdAt(LocalDateTime.now())
-                    .status(OutboxStatus.PENDING)
-                    .build();
-            outboxService.save(outboxMessage);
-        } catch (Exception e) {
-            // noti admin
-            log.error("Create restock event failed, event = {}", event);
-            throw new BusinessException(ErrorCode.SERVER_ERROR);
+    private BigDecimal getEffectivePrice(UUID ticketId) {
+        TicketResponseDTO ticket = eventClient.findTicketById(ticketId).getData();
+        if (ticket == null) return BigDecimal.valueOf(-1);
+        if (ticket.getFlashPrice() != null && ticket.getFlashPrice().compareTo(BigDecimal.valueOf(0)) > 0) {
+            return ticket.getOriginalPrice();
         }
+        return ticket.getOriginalPrice() != null ? ticket.getOriginalPrice() : BigDecimal.valueOf(-1);
     }
+
+//    @Transactional(propagation = Propagation.REQUIRES_NEW)
+//    void buildErrorEvent(String ticketId, int quantity) {
+//        TicketStockEvent event = TicketStockEvent.builder()
+//                .ticketId(ticketId)
+//                .quantity(quantity)
+//                .build();
+//        try {
+//            String jsonMsg = objectMapper.writeValueAsString(event);
+//            OutboxMessage outboxMessage = OutboxMessage.builder()
+//                    .topic(TICKET_RESTOCK_TOPIC)
+//                    .aggregateType(TicketStockEvent.class.getSimpleName())
+//                    .payload(jsonMsg)
+//                    .eventType("ticketRestock")
+//                    .createdAt(Instant.now())
+//                    .status(OutboxStatus.PENDING)
+//                    .build();
+//            outboxService.save(outboxMessage);
+//        } catch (Exception e) {
+//            // noti admin
+//            log.error("Create restock event failed, event = {}", event);
+//            throw new BusinessException(ErrorCode.SERVER_ERROR);
+//        }
+//    }
 
     @Override
     @Transactional
@@ -192,7 +212,7 @@ public class OrderServiceImpl implements OrderService {
         }
         if(hasNext) {
             Order lastOrder = orders.getLast();
-            nextCursor = cursorService.generateCursor(lastOrder.getId(), lastOrder.getCreatedAt());
+            nextCursor = cursorService.generateCursor(lastOrder.getId().toString(), lastOrder.getCreatedAt());
         }
         List<OrderResponseDTO> orderResponses = new ArrayList<>(orders
                 .stream()

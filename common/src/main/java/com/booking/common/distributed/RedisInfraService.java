@@ -1,4 +1,4 @@
-package com.booking.eventservice.distributed;
+package com.booking.common.distributed;
 
 import org.springframework.data.redis.core.RedisTemplate;
 

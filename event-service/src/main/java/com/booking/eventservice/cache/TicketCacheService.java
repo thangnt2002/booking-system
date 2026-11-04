@@ -1,8 +1,8 @@
 package com.booking.eventservice.cache;
 
-import com.booking.eventservice.distributed.RedisDistributedLocker;
-import com.booking.eventservice.distributed.RedisDistributedService;
-import com.booking.eventservice.distributed.RedisInfraService;
+import com.booking.common.distributed.RedisDistributedLocker;
+import com.booking.common.distributed.RedisDistributedService;
+import com.booking.common.distributed.RedisInfraService;
 import com.booking.eventservice.dtos.cache.TicketCache;
 import com.booking.eventservice.entity.Ticket;
 import com.booking.eventservice.repository.TicketRepository;
@@ -15,10 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import static com.booking.eventservice.common.Utils.genDistributedTicketStockAvailableKey;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import static com.booking.eventservice.common.Utils.*;
+
+import static com.booking.common.utils.CacheKeyUtils.*;
 
 @Service
 @Slf4j
@@ -36,7 +37,7 @@ public class TicketCacheService {
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build();
 
-    public TicketCache getTicket(String ticketId, Long version){
+    public TicketCache getTicket(UUID ticketId, Long version){
         TicketCache ticketCache = getFromLocalCache(ticketId);
 
         if (ticketCache != null) {
@@ -53,11 +54,11 @@ public class TicketCacheService {
         return (ticketCache == null || ticketCache.isNullObject()) ? null : ticketCache;
     }
 
-    public TicketCache getFromLocalCache(String ticketId){
+    public TicketCache getFromLocalCache(UUID ticketId){
         return ticketLocalCache.getIfPresent(genLocalCacheKey(Ticket.class, ticketId));
     }
 
-    public TicketCache getFromDistributedCache(String ticketId) {
+    public TicketCache getFromDistributedCache(UUID ticketId) {
         String redisKey = genDistributedCacheKey(Ticket.class, ticketId);
         TicketCache ticketCache = redisInfraService.getObject(redisKey, TicketCache.class);
 
@@ -72,7 +73,7 @@ public class TicketCacheService {
         return ticketCache;
     }
 
-    public TicketCache getFromDB(String ticketId) {
+    public TicketCache getFromDB(UUID ticketId) {
         String redisKey = genDistributedCacheKey(Ticket.class, ticketId);
         RedisDistributedLocker locker = redisDistributedService.getDistributedLock(genRequestLockKey(Ticket.class, ticketId));
         try {
@@ -108,7 +109,7 @@ public class TicketCacheService {
     }
 
 
-    public int decreaseStock(String ticketId, int quantity) {
+    public int decreaseStock(UUID ticketId, int quantity) {
         String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
         String luaScript = "local stock = redis.call('GET', KEYS[1]);" +
                 "if stock == false then return -1 end; " +
@@ -123,7 +124,7 @@ public class TicketCacheService {
         return result != null ? result.intValue() : 0;
     }
 
-    public boolean increaseStock(String ticketId, int quantity) {
+    public boolean increaseStock(UUID ticketId, int quantity) {
         String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
         String luaScript = "local stock = redis.call('GET', [KEYS]); " +
                 "if (stock) then " +

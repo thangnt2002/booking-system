@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Builder
 @Getter
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TicketRequestDTO {
 
-    private String eventId;
+    private UUID eventId;
 
     private TicketStatus status;
 

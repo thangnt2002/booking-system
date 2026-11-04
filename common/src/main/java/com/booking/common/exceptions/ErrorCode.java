@@ -17,7 +17,8 @@ public enum ErrorCode {
     INVALID_START_TIME(400, Constant.INVALID_START_TIME, HttpStatus.BAD_REQUEST),
     START_TIME_CANNOT_BE_IN_THE_PAST(400, Constant.START_TIME_CANNOT_BE_IN_THE_PAST, HttpStatus.BAD_REQUEST),
     INVALID_TIME_FORMAT(400, Constant.INVALID_TIME_FORMAT, HttpStatus.BAD_REQUEST),
-    INVALID_TIME_LIMIT(400, Constant.INVALID_TIME_LIMIT, HttpStatus.BAD_REQUEST);
+    INVALID_TIME_LIMIT(400, Constant.INVALID_TIME_LIMIT, HttpStatus.BAD_REQUEST),
+    OUT_OF_STOCK(409, Constant.OUT_OF_STOCK, HttpStatus.CONFLICT);
 
 
     ErrorCode(int code, String message, HttpStatusCode statusCode){

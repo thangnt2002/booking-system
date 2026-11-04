@@ -19,6 +19,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -32,7 +33,7 @@ public class CursorServiceImpl implements CursorService {
     private static final int IV_LENGTH_BYTE = 12;
 
     @Override
-    public String generateCursor(String id, LocalDateTime time) {
+    public String generateCursor(UUID id, LocalDateTime time) {
         if (id == null || time == null) {
             log.info("Invalid value to generate cursor, id = {}, time = {}", id, time);
             throw new BusinessException(ErrorCode.SERVER_ERROR);

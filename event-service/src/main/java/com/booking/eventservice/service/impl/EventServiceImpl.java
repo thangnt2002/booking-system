@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -53,13 +54,13 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event findById(String id, Long version) {
+    public Event findById(UUID id, Long version) {
         EventCache cachedEvent = getEventFromCache(id, version);
         return eventMapper.fromCacheToEntity(cachedEvent);
     }
 
     @Override
-    public EventResponseDTO findEventById(String id, Long version) {
+    public EventResponseDTO findEventById(UUID id, Long version) {
         EventCache cachedEvent = getEventFromCache(id, version);
         EventResponseDTO response = eventMapper.toResponse(cachedEvent.getEvent());
         response.setVersion(cachedEvent.getVersion());
@@ -101,7 +102,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event update(String id, EventRequestDTO requestDTO) {
+    public Event update(UUID id, EventRequestDTO requestDTO) {
         Event existingEvent = eventRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
 
@@ -117,7 +118,7 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    private EventCache getEventFromCache(String id, Long version) {
+    private EventCache getEventFromCache(UUID id, Long version) {
         if (id == null) {
             return null;
         }

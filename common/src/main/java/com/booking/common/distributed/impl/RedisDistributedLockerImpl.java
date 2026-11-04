@@ -1,8 +1,7 @@
-package com.booking.eventservice.distributed.impl;
+package com.booking.common.distributed.impl;
 
-import com.booking.eventservice.distributed.RedisDistributedLocker;
-import com.booking.eventservice.distributed.RedisDistributedService;
-import jakarta.annotation.Resource;
+import com.booking.common.distributed.RedisDistributedLocker;
+import com.booking.common.distributed.RedisDistributedService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

@@ -16,6 +16,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 import static com.booking.eventservice.common.Constant.TICKET_DECREASE_STOCK_TOPIC;
 import static com.booking.eventservice.common.Constant.TICKET_RESTOCK_TOPIC;
 
@@ -30,7 +32,7 @@ public class OrderConsumer {
 
     @KafkaListener(topics = TICKET_RESTOCK_TOPIC, groupId = "event-group")
     @Transactional(rollbackFor = Exception.class)
-    public void listenTicketRestock(@Payload TicketStockEvent message, @Header(KafkaHeaders.RECEIVED_KEY) String key) {
+    public void listenTicketRestock(@Payload TicketStockEvent message, @Header(KafkaHeaders.RECEIVED_KEY) UUID key) {
         log.info("Message received: {}", message);
         boolean isNewEvent = idempotencyKeyService.tryInsert(key);
         if (!isNewEvent) {
@@ -52,7 +54,7 @@ public class OrderConsumer {
 
     @KafkaListener(topics = TICKET_DECREASE_STOCK_TOPIC, groupId = "event-group")
     @Transactional(rollbackFor = Exception.class)
-    public void listenDecreaseStock(@Payload TicketStockEvent message, @Header(KafkaHeaders.RECEIVED_KEY) String key) {
+    public void listenDecreaseStock(@Payload TicketStockEvent message, @Header(KafkaHeaders.RECEIVED_KEY) UUID key) {
         log.info("Decrease stock message received: {}", message);
         boolean isNewEvent = idempotencyKeyService.tryInsert(key);
         if (!isNewEvent) {

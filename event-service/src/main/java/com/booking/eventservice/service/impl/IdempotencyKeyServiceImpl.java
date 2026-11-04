@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Service
@@ -22,7 +23,7 @@ public class IdempotencyKeyServiceImpl implements IdempotencyKeyService {
     IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Override
-    public boolean tryInsert(String id) {
+    public boolean tryInsert(UUID id) {
         try {
             IdempotencyKey key = IdempotencyKey
                     .builder()

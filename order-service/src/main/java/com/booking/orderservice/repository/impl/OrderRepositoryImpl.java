@@ -92,12 +92,12 @@ public class OrderRepositoryImpl implements OrderRepository {
         if (result.isEmpty()) return null;
         Object[] row = result.getFirst();
         return new Order(
-                (String) row[0],
+                (UUID) row[0],
                 (String) row[1],
-                (String) row[2],
+                (UUID) row[2],
                 (LocalDateTime) row[3],
                 OrderStatus.valueOf(row[4].toString()),
-                (String) row[5],
+                (UUID) row[5],
                 (Integer) row[6],
                 (BigDecimal) row[7],
                 (LocalDateTime) row[8],
@@ -125,12 +125,12 @@ public class OrderRepositoryImpl implements OrderRepository {
         if (result.isEmpty()) return null;
         Object[] row = result.getFirst();
         return new Order(
-                (String) row[0],
+                (UUID) row[0],
                 (String) row[1],
-                (String) row[2],
+                (UUID) row[2],
                 (LocalDateTime) row[3],
                 OrderStatus.valueOf(row[4].toString()),
-                (String) row[5],
+                (UUID) row[5],
                 (Integer) row[6],
                 (BigDecimal) row[7],
                 (LocalDateTime) row[8],
@@ -177,12 +177,12 @@ public class OrderRepositoryImpl implements OrderRepository {
         List<Order> orders = new ArrayList<>();
         rows.forEach(row -> {
             Order order = Order.builder()
-                    .id((String) row[0])
+                    .id((UUID) row[0])
                     .orderNumber((String) row[1])
-                    .customerId((String) row[2])
+                    .customerId((UUID) row[2])
                     .orderDate((LocalDateTime) row[3])
                     .status(OrderStatus.valueOf(row[4].toString()))
-                    .ticketId((String) row[5])
+                    .ticketId((UUID) row[5])
                     .quantity((Integer) row[6])
                     .price((BigDecimal) row[7])
                     .createdAt((LocalDateTime) row[9])
@@ -204,12 +204,12 @@ public class OrderRepositoryImpl implements OrderRepository {
            List<Order> orders = new ArrayList<>();
            rows.forEach(row -> {
                Order order = Order.builder()
-                       .id((String) row[0])
+                       .id((UUID) row[0])
                        .orderNumber((String) row[1])
-                       .customerId((String) row[2])
+                       .customerId((UUID) row[2])
                        .orderDate((LocalDateTime) row[3])
                        .status(OrderStatus.valueOf(row[4].toString()))
-                       .ticketId((String) row[5])
+                       .ticketId((UUID) row[5])
                        .quantity((Integer) row[6])
                        .price((BigDecimal) row[7])
                        .createdAt((LocalDateTime) row[9])
@@ -227,12 +227,12 @@ public class OrderRepositoryImpl implements OrderRepository {
             IF OBJECT_ID(N'%1$s', N'U') IS NULL
             BEGIN
                 CREATE TABLE %1$s (
-                    id              NVARCHAR(36)     NOT NULL PRIMARY KEY,
+                    id              UNIQUEIDENTIFIER(36)     NOT NULL PRIMARY KEY DEFAULT NEWID(),
                     order_number    NVARCHAR(100)     NOT NULL,
-                    customer_id     NVARCHAR(36)     NOT NULL,
+                    customer_id     UNIQUEIDENTIFIER(36)     NOT NULL,
                     order_date      DATETIME2        NOT NULL,
                     status          NVARCHAR(30)     NOT NULL,
-                    ticket_id       NVARCHAR(36)     NOT NULL,
+                    ticket_id       UNIQUEIDENTIFIER(36)     NOT NULL,
                     quantity        INT              NOT NULL,
                     price           DECIMAL(18,2)    NOT NULL,
                     updated_at      DATETIME2        NULL,
