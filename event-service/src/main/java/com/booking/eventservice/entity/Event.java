@@ -4,9 +4,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,10 +17,10 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "event")
-public class Event {
+@Table(name = "events")
+public class Event extends BaseModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,23 +33,14 @@ public class Event {
     private String description;
 
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private Instant startTime;
 
     @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private Instant endTime;
 
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String location;
 
     @Column(nullable = false)
     private String poster;
-
-    @Column(name = "deleted", columnDefinition = "BIT DEFAULT 0", nullable = false)
-    private boolean deleted;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 }

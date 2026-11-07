@@ -20,9 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+
+import static com.booking.common.utils.UserUtils.getCurrentUserId;
 
 @Service
 @RequiredArgsConstructor
@@ -42,14 +44,13 @@ public class EventServiceImpl implements EventService {
                 throw new BusinessException(ErrorCode.INVALID_START_TIME);
             }
         }
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         if (request.getStartTime() != null && request.getStartTime().isBefore(now)) {
             throw new BusinessException(ErrorCode.START_TIME_CANNOT_BE_IN_THE_PAST);
         }
 
         Event event = eventMapper.toEntity(request);
-        event.setCreatedAt(now);
-        event.setUpdatedAt(now);
+        event.setCreatedBy(getCurrentUserId());
         return eventRepository.save(event);
     }
 
@@ -84,7 +85,7 @@ public class EventServiceImpl implements EventService {
             hasNext = true;
             events.removeLast();
             Event lastEvent = events.getLast();
-            nextCursor = cursorService.generateCursor(lastEvent.getId(), lastEvent.getCreatedAt());
+            nextCursor = cursorService.generateCursor(lastEvent.getId(), lastEvent.getCreatedDate());
         }
         List<EventResponseDTO> response = events.stream().map(eventMapper::toResponse).toList();
 
@@ -107,7 +108,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
 
         eventMapper.updateEntity(requestDTO, existingEvent);
-        existingEvent.setUpdatedAt(LocalDateTime.now());
+        existingEvent.setUpdatedBy(getCurrentUserId());
         eventCacheService.invalidateEvent(id);
         eventCacheService.buildCache(existingEvent);
         return existingEvent;

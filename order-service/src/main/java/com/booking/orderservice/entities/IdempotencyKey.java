@@ -3,8 +3,10 @@ package com.booking.orderservice.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -12,10 +14,10 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "idempotency_key")
-public class IdempotencyKey {
+@Table(name = "idempotency_keys")
+public class IdempotencyKey extends BaseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
@@ -24,6 +26,5 @@ public class IdempotencyKey {
     String eventId;
 
     @Column(name = "processed_at", nullable = false)
-    LocalDateTime processedAt;
-
+    Instant processedAt;
 }

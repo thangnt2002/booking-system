@@ -7,7 +7,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 @Getter
@@ -32,9 +32,9 @@ public class TicketResponseDTO {
 
     BigDecimal flashPrice;
 
-    LocalDateTime saleStartTime;
+    Instant saleStartTime;
 
-    LocalDateTime saleEndTime;
+    Instant saleEndTime;
 
     Long version;
 }

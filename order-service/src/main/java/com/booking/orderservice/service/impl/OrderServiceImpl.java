@@ -1,9 +1,7 @@
 package com.booking.orderservice.service.impl;
 
-
-import com.booking.common.services.StockViewService;
-import com.booking.orderservice.distributed.RedisDistributedLocker;
-import com.booking.orderservice.distributed.RedisDistributedService;
+import com.booking.common.distributed.RedisDistributedLocker;
+import com.booking.common.distributed.RedisDistributedService;
 import com.booking.orderservice.dtos.CursorDTO;
 import com.booking.orderservice.dtos.Page;
 import com.booking.orderservice.dtos.response.OrderResponseDTO;
@@ -32,17 +30,19 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.booking.common.utils.Constant.PLACE_ORDER_TOPIC;
 import static com.booking.common.utils.UserUtils.getCurrentUserId;
-import static com.booking.orderservice.common.Constant.*;
 import static com.booking.orderservice.common.Utils.genRequestLockKey;
 
 @Service
@@ -57,21 +57,44 @@ public class OrderServiceImpl implements OrderService {
     CursorService cursorService;
     ObjectMapper objectMapper;
     OrderMapper orderMapper;
-    StockViewService stockViewService;
+    StockCacheService stockCacheService;
+
+    private static final String NS = "checkout:v1:";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean order(UUID ticketId, int quantity) {
+    public boolean order(UUID ticketId, int quantity, UUID idempotencyKey) {
+
+        validateRequest(ticketId, quantity, idempotencyKey);
+
+        UUID customerId = getCurrentUserId();
+        UUID orderId = idempotentOrderId(customerId, idempotencyKey);
+
+        //TODO pre check here
+//        Optional<Order> existing = orderRepository.findById(orderId);
+//        if (existing.isPresent()) return CheckoutResult.of(existing.get());
+
         // check redis
-        Long remaining = stockViewService.getRemaining(ticketId);
-        if (remaining != null && remaining < quantity) {
+        int remaining = stockCacheService.reserveByLUA(ticketId, quantity);
+        // do not warm cache
+        if (remaining < 0) {
+            stockCacheService.warmCache(ticketId);
+            remaining = stockCacheService.reserveByLUA(ticketId, quantity);
+        }
+
+        if( remaining == 0){
             throw new BusinessException(ErrorCode.OUT_OF_STOCK);
         }
 
+        Instant now = Instant.now();
+        Instant expiresAt = now.plus(15, ChronoUnit.MINUTES);
+
+        int r = stockCacheService.reserveByLUA(ticketId, quantity);
+
+        // TODO continue here
         try {
          BigDecimal effectivePrice = getEffectivePrice(ticketId);
             // create order
-            LocalDateTime now = LocalDateTime.now();
             UUID userId = getCurrentUserId();
             String orderNumber = String.format("BNB-HN-%s-%s-%s", userId, ticketId, System.currentTimeMillis());
             Order order = Order.builder()
@@ -82,23 +105,21 @@ public class OrderServiceImpl implements OrderService {
                     .quantity(quantity)
                     .price(effectivePrice)
                     .orderDate(now)
-                    .updatedAt(now)
-                    .createdAt(now)
+                    .createdBy(getCurrentUserId())
                     .build();
 
-            TicketStockEvent ticketDecreaseStockEvent = new TicketStockEvent(ticketId, quantity);
+            TicketStockEvent ticketDecreaseStockEvent = new TicketStockEvent(ticketId, quantity, orderNumber);
 
             String jsonMsg = objectMapper.writeValueAsString(ticketDecreaseStockEvent);
             OutboxMessage outboxMessage = OutboxMessage.builder()
-                    .topic(TICKET_DECREASE_STOCK_TOPIC)
+                    .topic(PLACE_ORDER_TOPIC)
                     .aggregateType(TicketStockEvent.class.getSimpleName())
                     .payload(jsonMsg)
-                    .eventType("decreaseStock")
-                    .createdAt(Instant.now())
+                    .createdBy(getCurrentUserId())
                     .status(OutboxStatus.PENDING)
                     .build();
 
-            String tableName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+            String tableName = YearMonth.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
             orderRepository.insertOrder(tableName, order);
 
             outboxService.save(outboxMessage);
@@ -106,6 +127,23 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("Decrease failed for ticket id {}, err: {}", ticketId, e.getMessage());
             throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+    }
+
+    private UUID idempotentOrderId(UUID customerId, UUID idempotencyKey) {
+        String seed = NS + customerId + ":" + idempotencyKey;
+        return UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void validateRequest(UUID ticketId, int quantity, UUID idempotencyKey) {
+        if (ticketId == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (quantity <= 0) {                     // quantity âm sẽ làm Redis cộng thêm vé
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (idempotencyKey == null) {
+            throw new BusinessException(ErrorCode.INVALID_IDEMPOTENCY_KEY);
         }
     }
 
@@ -212,7 +250,7 @@ public class OrderServiceImpl implements OrderService {
         }
         if(hasNext) {
             Order lastOrder = orders.getLast();
-            nextCursor = cursorService.generateCursor(lastOrder.getId().toString(), lastOrder.getCreatedAt());
+            nextCursor = cursorService.generateCursor(lastOrder.getId().toString(), lastOrder.getCreatedDate());
         }
         List<OrderResponseDTO> orderResponses = new ArrayList<>(orders
                 .stream()
@@ -232,10 +270,10 @@ public class OrderServiceImpl implements OrderService {
                 throw new BusinessException(ErrorCode.INVALID_TIME_FORMAT);
             }
             long timeStamp = Long.parseLong(parts[parts.length - 1]);
-            LocalDateTime date = Instant.ofEpochMilli(timeStamp)
+            Instant date = Instant.ofEpochMilli(timeStamp)
                     .atZone(ZoneId.systemDefault())
-                    .toLocalDateTime();
-            return date.format(DateTimeFormatter.ofPattern("yyyyMM"));
+                    .toInstant();
+            return YearMonth.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
         } catch (Exception e) {
             log.error("failed to extract year month: {}", e.getMessage());
             throw new RuntimeException(e);

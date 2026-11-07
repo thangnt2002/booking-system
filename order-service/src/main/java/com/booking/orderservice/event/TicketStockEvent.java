@@ -13,4 +13,5 @@ import java.util.UUID;
 public class TicketStockEvent {
     UUID ticketId;
     int quantity;
+    String orderNumber;
 }

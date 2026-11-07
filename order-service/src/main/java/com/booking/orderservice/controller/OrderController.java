@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/orders")
@@ -23,9 +25,10 @@ public class OrderController {
     OrderService orderService;
 
     @PostMapping("/{ticketId}/{quantity}")
-    public ResponseEntity<ApiResponse<Void>> order(@PathVariable("ticketId") String ticketId,
-                                                   @PathVariable("quantity") int quantity) {
-        orderService.order(ticketId, quantity);
+    public ResponseEntity<ApiResponse<Void>> order(@PathVariable("ticketId") UUID ticketId,
+                                                   @PathVariable("quantity") int quantity,
+                                                   @RequestHeader("Idempotency-Key") UUID idempotencyKey) {
+        orderService.order(ticketId, quantity, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).
                 body(ApiResponse.<Void>builder().code(201).success(true).build());
     }

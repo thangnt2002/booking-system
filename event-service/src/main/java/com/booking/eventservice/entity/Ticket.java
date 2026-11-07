@@ -6,26 +6,29 @@ import com.booking.eventservice.enums.TicketType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-@Builder
-@Table(name = "ticket")
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Ticket {
+@Table(name = "tickets")
+public class Ticket extends BaseModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
 
-    String eventId;
+    @Column(name = "event_id", nullable = false)
+    UUID eventId;
 
     @Enumerated(EnumType.STRING)
     TicketStatus status;
@@ -46,6 +49,9 @@ public class Ticket {
     @Column(name = "reserved_stock", nullable = false, columnDefinition = "INT DEFAULT 0")
     Integer reservedStock;
 
+    @Column(name = "sold", nullable = false, columnDefinition = "INT DEFAULT 0")
+    Integer sold;
+
     @Column(name = "original_price", precision = 18, scale = 2)
     BigDecimal originalPrice;
 
@@ -53,18 +59,8 @@ public class Ticket {
     BigDecimal flashPrice;
 
     @Column(name = "sale_start_time", nullable = false)
-    LocalDateTime saleStartTime;
+    Instant saleStartTime;
 
     @Column(name = "sale_end_time", nullable = false)
-    LocalDateTime saleEndTime;
-
-    @Column(name = "deleted", columnDefinition = "BIT DEFAULT 0", nullable = false)
-    boolean deleted;
-
-    @Column(name = "updated_at", nullable = false)
-    LocalDateTime updatedAt;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    LocalDateTime createdAt;
-
+    Instant saleEndTime;
 }

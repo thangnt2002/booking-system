@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static com.booking.eventservice.common.Constant.TICKET_DECREASE_STOCK_TOPIC;
+import static com.booking.common.utils.Constant.PLACE_ORDER_TOPIC;
 import static com.booking.eventservice.common.Constant.TICKET_RESTOCK_TOPIC;
 
 @Component
@@ -52,7 +52,7 @@ public class OrderConsumer {
         }
     }
 
-    @KafkaListener(topics = TICKET_DECREASE_STOCK_TOPIC, groupId = "event-group")
+    @KafkaListener(topics = PLACE_ORDER_TOPIC, groupId = "event-group")
     @Transactional(rollbackFor = Exception.class)
     public void listenDecreaseStock(@Payload TicketStockEvent message, @Header(KafkaHeaders.RECEIVED_KEY) UUID key) {
         log.info("Decrease stock message received: {}", message);

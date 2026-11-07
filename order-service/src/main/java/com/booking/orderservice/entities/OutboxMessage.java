@@ -4,19 +4,20 @@ import com.booking.orderservice.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "outbox_message")
-public class OutboxMessage {
+@Table(name = "outbox_messages")
+public class OutboxMessage extends BaseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
@@ -38,9 +39,6 @@ public class OutboxMessage {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     OutboxStatus status;
-
-    @Column(name = "created_at")
-    Instant createdAt;
 
     @Column(name = "published_at")
     Instant publishedAt;

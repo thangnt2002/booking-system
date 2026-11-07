@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -33,7 +33,7 @@ public class CursorServiceImpl implements CursorService {
     private static final int IV_LENGTH_BYTE = 12;
 
     @Override
-    public String generateCursor(UUID id, LocalDateTime time) {
+    public String generateCursor(UUID id, Instant time) {
         if (id == null || time == null) {
             log.info("Invalid value to generate cursor, id = {}, time = {}", id, time);
             throw new BusinessException(ErrorCode.SERVER_ERROR);
@@ -84,7 +84,7 @@ public class CursorServiceImpl implements CursorService {
 
             String[] parts = rawData.split("\\|", 2);
 
-            LocalDateTime time = LocalDateTime.parse(parts[0]);
+            Instant time = Instant.parse(parts[0]);
             String id = parts[1];
 
             return new CursorDTO(id, time);

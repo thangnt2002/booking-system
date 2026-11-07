@@ -24,4 +24,6 @@ public interface TicketService {
 
     boolean decreaseStock(UUID ticketId, int quantity);
 
+    boolean warmCache(UUID ticketId);
+
 }

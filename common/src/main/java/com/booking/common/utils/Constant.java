@@ -22,6 +22,8 @@ public class Constant {
     public static final String TOPIC_USER_OB = "user-ob-topic";
     public static final String TOPIC_CREATE_PROFILE = "user-profile-create-topic";
     public static final String TOPIC_ACCOUNT_REVERT= "account-revert-topic";
+    public static final String TICKET_DECREASE_STOCK_TOPIC = "ticket-decrease-stock-topic";
+    public static final String PLACE_ORDER_TOPIC = "place-order-topic";
 
     // token
     public static final String TOKEN_TYPE = "type";

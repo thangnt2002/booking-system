@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface OutboxRepository extends JpaRepository<OutboxMessage, String> {
@@ -20,5 +21,5 @@ public interface OutboxRepository extends JpaRepository<OutboxMessage, String> {
    @Query(value = "UPDATE outbox_message SET published_at = CURRENT_TIMESTAMP," +
            "status = :status WHERE id = :id",
            nativeQuery = true)
-   void updateStatus(@Param("id") String id, @Param("status") String status);
+   void updateStatus(@Param("id") UUID id, @Param("status") String status);
 }

@@ -13,18 +13,24 @@ import java.util.UUID;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Ticket t SET t.updatedAt = CURRENT_TIMESTAMP," +
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Ticket t SET t.updatedDate = CURRENT_TIMESTAMP," +
             "t.stockAvailable = t.stockAvailable - :quantity," +
             "t.reservedStock = t.reservedStock + :quantity " +
-            "WHERE t.id = :ticketId AND t.stockAvailable > :quantity ")
+            "WHERE t.id = :ticketId AND t.stockAvailable >= :quantity ")
+    int reservedStock(@Param("ticketId") UUID ticketId, @Param("quantity") int quantity);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Ticket t SET t.updatedDate = CURRENT_TIMESTAMP," +
+            "t.reservedStock = t.reservedStock - :quantity," +
+            "t.sold = t.sold + :quantity " +
+            "WHERE t.id = :ticketId AND t.reservedStock >= :quantity ")
     int decreaseStock(@Param("ticketId") UUID ticketId, @Param("quantity") int quantity);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Ticket t SET t.updatedAt = CURRENT_TIMESTAMP," +
-            "t.stockAvailable = t.stockAvailable + :quantity " +
-            "WHERE t.id = :ticketId")
-    boolean restock(@Param("ticketId") UUID ticketId, @Param("quantity") int quantity);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Ticket t SET t.updatedDate = CURRENT_TIMESTAMP," +
+            "t.stockAvailable = t.stockAvailable + :quantity, " +
+            "t.reservedStock = t.reservedStock - :quantity " +
+            "WHERE t.id = :ticketId AND t.reservedStock >= :quantity")
+    int restock(@Param("ticketId") UUID ticketId, @Param("quantity") int quantity);
 }

@@ -4,9 +4,10 @@ import com.booking.orderservice.enums.OutboxStatus;
 import com.booking.orderservice.entities.OutboxMessage;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface OutboxService {
     OutboxMessage save(OutboxMessage outboxMessage);
     List<OutboxMessage> findByStatus(OutboxStatus status);
-    void markAsPublish(String outboxId);
+    void markAsPublish(UUID outboxId);
 }

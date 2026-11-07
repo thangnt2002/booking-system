@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface EventRepository extends JpaRepository<Event, UUID> {
 
     @Query(value = """
-    SELECT TOP (:limit) * FROM event e
+    SELECT TOP (:limit) * FROM events e
     WHERE
         (:search IS NULL OR :search = '' OR e.name LIKE '%' + :search + '%')
     AND
@@ -27,7 +27,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     """, nativeQuery = true)
     List<Event> findCursorPage(
             @Param("id") String id,
-            @Param("createdAt") LocalDateTime createdAt,
+            @Param("createdAt") Instant createdAt,
             @Param("limit") int limit,
             @Param("search") String search
     );

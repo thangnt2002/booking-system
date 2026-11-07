@@ -22,10 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.booking.common.utils.CacheKeyUtils.genDistributedTicketStockAvailableKey;
+import static com.booking.common.utils.UserUtils.getCurrentUserId;
 
 
 @Service
@@ -48,7 +49,7 @@ public class TicketServiceImpl implements TicketService {
                 throw new BusinessException(ErrorCode.INVALID_START_TIME);
             }
         }
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         if (request.getSaleStartTime() != null && request.getSaleStartTime().isBefore(now)) {
             throw new BusinessException(ErrorCode.START_TIME_CANNOT_BE_IN_THE_PAST);
         }
@@ -59,8 +60,8 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Ticket ticket = ticketMapper.toEntity(request);
-        ticket.setCreatedAt(now);
-        ticket.setUpdatedAt(now);
+        UUID userId = getCurrentUserId();
+        ticket.setCreatedBy(userId);
         return ticketRepository.save(ticket);
     }
 
@@ -128,24 +129,26 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    private void warmCache(UUID ticketId) {
+    @Override
+    public boolean warmCache(UUID ticketId) {
         if (ticketId == null) {
-            return;
+            return false;
         }
         TicketCache cached = ticketCacheService.getTicket(ticketId, null);
-        if (cached == null || cached.isNullObject()){
-            return;
+        if (cached == null || cached.isNullObject()) {
+            return false;
         }
         log.info("Warming cache for ticket = {}", ticketId);
         Ticket ticket = cached.getTicket();
         String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
         redisInfraService.setObject(stockAvailableCacheKey, ticket.getStockAvailable());
+        return true;
     }
 
     @Override
     @Transactional
     public boolean decreaseStock(UUID ticketId, int quantity) {
-        int isDbDecremented = ticketRepository.decreaseStock(ticketId, quantity);
+        int isDbDecremented = ticketRepository.reservedStock(ticketId, quantity);
 
         try {
             if (isDbDecremented > 0) {

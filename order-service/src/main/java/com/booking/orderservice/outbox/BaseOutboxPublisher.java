@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
+
+import static com.booking.common.utils.UserUtils.getCurrentUserId;
 
 @Slf4j
 @Component
@@ -28,7 +30,7 @@ public abstract class BaseOutboxPublisher<T> {
     public abstract UUID getAggregateId(T aggregate);
 
     @Transactional
-    public void publishEvent(T aggregate, String eventType, String topic) {
+    public void publishEvent(T aggregate, String topic) {
         try {
             String payload = objectMapper.writeValueAsString(aggregate);
 
@@ -37,10 +39,9 @@ public abstract class BaseOutboxPublisher<T> {
                     .aggregateId(getAggregateId(aggregate))
                     .payload(payload)
                     .topic(topic)
-                    .eventType(eventType)
                     .status(OutboxStatus.PENDING)
                     .retryCount(0)
-                    .createdAt(Instant.now())
+                    .createdBy(getCurrentUserId())
                     .build();
 
             outboxService.save(outbox);

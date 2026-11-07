@@ -3,7 +3,7 @@ package com.booking.eventservice.dtos.request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 @Getter
@@ -17,9 +17,9 @@ public class EventRequestDTO {
 
     String description;
 
-    LocalDateTime startTime;
+    Instant startTime;
 
-    LocalDateTime endTime;
+    Instant endTime;
 
     String location;
 

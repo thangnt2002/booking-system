@@ -67,4 +67,16 @@ public class TicketInternalController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @PostMapping("/{ticketId}/{quantity}/decrease")
+    public ResponseEntity<ApiResponse<Boolean>> warmCache(@PathVariable("ticketId") UUID ticketId){
+        boolean result = ticketService.warmCache(ticketId);
+        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
+                .success(true)
+                .code(200)
+                .data(result)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+
 }

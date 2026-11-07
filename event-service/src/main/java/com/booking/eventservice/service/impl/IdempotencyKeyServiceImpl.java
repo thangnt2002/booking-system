@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 
@@ -28,7 +28,7 @@ public class IdempotencyKeyServiceImpl implements IdempotencyKeyService {
             IdempotencyKey key = IdempotencyKey
                     .builder()
                     .eventId(id)
-                    .processedAt(LocalDateTime.now())
+                    .processedAt(Instant.now())
                     .build();
             idempotencyKeyRepository.save(key);
             return true;

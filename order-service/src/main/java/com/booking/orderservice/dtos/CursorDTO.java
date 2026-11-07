@@ -4,7 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 @Data
@@ -15,5 +15,5 @@ import java.time.LocalDateTime;
 @Service
 public class CursorDTO {
     String id;
-    LocalDateTime date;
+    Instant date;
 }

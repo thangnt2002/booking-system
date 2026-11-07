@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -34,7 +35,7 @@ public class OutboxServiceImpl implements OutboxService {
     }
 
     @Override
-    public void markAsPublish(String outboxId) {
+    public void markAsPublish(UUID outboxId) {
         outboxRepository.updateStatus(outboxId, OutboxStatus.SENT.name());
     }
 }

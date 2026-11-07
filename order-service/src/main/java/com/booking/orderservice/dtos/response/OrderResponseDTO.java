@@ -5,7 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 @Getter
@@ -18,7 +18,7 @@ public class OrderResponseDTO {
 
     String customerId;
 
-    LocalDateTime orderDate;
+    Instant orderDate;
 
     OrderStatus status;
 

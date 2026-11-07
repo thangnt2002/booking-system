@@ -6,7 +6,7 @@ import com.booking.orderservice.dtos.response.OrderResponseDTO;
 import java.util.UUID;
 
 public interface OrderService {
-    boolean order(UUID ticketId, int quantity);
+    boolean order(UUID ticketId, int quantity, UUID idempotencyKey);
 
     boolean cancelOrder(String orderNumber);
 
