@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <version>4.0.9</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.booking.notificationservice</groupId>
@@ -29,13 +29,18 @@
     <properties>
         <java.version>25</java.version>
         <projectlombok-lombok.version>1.18.42</projectlombok-lombok.version>
-        <spring-cloud-version>2025.1.2</spring-cloud-version>
+        <spring-cloud-version>2025.1.4</spring-cloud-version>
     </properties>
     <dependencies>
         <!-- Source: https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-gateway -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
+        </dependency>
+        <!-- JWT validation against Keycloak's JWKS (no Spring Security filter chain is pulled in) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
 
         <dependency>
@@ -80,6 +85,20 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- JDK 23+ no longer runs annotation processors implicitly: Lombok must be declared -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${projectlombok-lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,0 +1,8 @@
+{
+  "/api": { "target": "http://localhost:8888", "secure": false, "changeOrigin": true },
+  "/svc/keycloak-profile": { "target": "http://localhost:8082", "pathRewrite": { "^/svc": "" }, "changeOrigin": true },
+  "/svc/notification": { "target": "http://localhost:8083", "pathRewrite": { "^/svc": "" }, "changeOrigin": true },
+  "/svc/event": { "target": "http://localhost:8084", "pathRewrite": { "^/svc": "" }, "changeOrigin": true },
+  "/svc/order": { "target": "http://localhost:8085", "pathRewrite": { "^/svc": "" }, "changeOrigin": true },
+  "/kc": { "target": "http://localhost:9999", "pathRewrite": { "^/kc": "" }, "changeOrigin": true }
+}

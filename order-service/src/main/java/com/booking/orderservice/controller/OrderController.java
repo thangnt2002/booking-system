@@ -1,58 +1,64 @@
 package com.booking.orderservice.controller;
 
-
 import com.booking.common.dtos.ApiResponse;
 import com.booking.orderservice.dtos.Page;
+import com.booking.orderservice.dtos.request.PlaceOrderRequest;
 import com.booking.orderservice.dtos.response.OrderResponseDTO;
 import com.booking.orderservice.service.OrderService;
-import lombok.AccessLevel;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderController {
 
-    OrderService orderService;
+    private final OrderService orderService;
 
-    @PostMapping("/{ticketId}/{quantity}")
-    public ResponseEntity<ApiResponse<Void>> order(@PathVariable("ticketId") UUID ticketId,
-                                                   @PathVariable("quantity") int quantity,
-                                                   @RequestHeader("Idempotency-Key") UUID idempotencyKey) {
-        orderService.order(ticketId, quantity, idempotencyKey);
-        return ResponseEntity.status(HttpStatus.CREATED).
-                body(ApiResponse.<Void>builder().code(201).success(true).build());
+    /**
+     * Creates a PENDING order holding the tickets for the payment window.
+     * Clients must send a fresh Idempotency-Key per purchase and reuse it on retries.
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<OrderResponseDTO>> placeOrder(
+            @RequestHeader("Idempotency-Key") UUID idempotencyKey,
+            @Valid @RequestBody PlaceOrderRequest request) {
+        OrderResponseDTO order = orderService.placeOrder(request, idempotencyKey);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ok(HttpStatus.CREATED, order));
     }
 
-    @PostMapping("/cancel/{orderNumber}")
-    public ResponseEntity<ApiResponse<Void>> cancelOrder(@PathVariable("orderNumber") String orderNumber) {
-        boolean response = orderService.cancelOrder(orderNumber);
-        return ResponseEntity.ok(ApiResponse.<Void>builder().code(200).success(response).build());
+    @GetMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<OrderResponseDTO>> getOrder(@PathVariable UUID orderId) {
+        return ResponseEntity.ok(ok(HttpStatus.OK, orderService.getMyOrder(orderId)));
     }
 
-    @GetMapping("/page/{userId}")
-    public ResponseEntity<ApiResponse<Page<OrderResponseDTO>>> pageOrderByUser(
-            @PathVariable("userId") String userId,
-            @RequestParam(value = "table", required = true) String table,
-            @RequestParam(value = "cursor", defaultValue = "") String cursor,
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<Void>> cancelOrder(@PathVariable UUID orderId) {
+        orderService.cancelMyOrder(orderId);
+        return ResponseEntity.ok(ok(HttpStatus.OK, null));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Page<OrderResponseDTO>>> myOrders(
+            @RequestParam(value = "cursor", required = false) String cursor,
             @RequestParam(value = "limit", defaultValue = "10") int limit,
-            @RequestParam(value = "search", defaultValue = "") String search
-    ) {
-         Page<OrderResponseDTO> page = orderService.getPage(userId, table, cursor, limit, search);
-         ApiResponse<Page<OrderResponseDTO>> response = ApiResponse.<Page<OrderResponseDTO>>builder()
-                 .success(true)
-                 .code(200)
-                 .data(page)
-                 .build();
-         return ResponseEntity.status(HttpStatus.OK).body(response);
+            @RequestParam(value = "search", required = false) String search) {
+        return ResponseEntity.ok(ok(HttpStatus.OK, orderService.getMyOrders(cursor, limit, search)));
+    }
+
+    private static <T> ApiResponse<T> ok(HttpStatus status, T data) {
+        return ApiResponse.<T>builder().success(true).code(status.value()).data(data).build();
     }
 }

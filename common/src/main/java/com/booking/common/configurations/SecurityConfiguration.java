@@ -29,6 +29,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.booking.common.utils.Constant.VALID_INTERNAL_KEY_ATTRIBUTE;
@@ -45,7 +46,9 @@ public class SecurityConfiguration {
             "/auth/token",
             "/auth/introspect",
             "/auth/logout",
-            "/users/registrations"
+            "/users/registrations",
+            "/profiles/registrations",
+            "/events/list"
     };
 
     private final String[] INTERNAL_ENDPOINT = {
@@ -168,10 +171,15 @@ public class SecurityConfiguration {
         return http.build();
     }
 
+    // Origin of the browser app (frontend :4200, frontend-keycloak :4201, ...). Requests proxied through the
+    // Angular dev-server / api-gateway keep the browser's Origin header, so it must be allowed here too.
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:4200,http://localhost:4201}")
+    private List<String> allowedOrigins;
+
     @Bean
     CorsFilter corsFilter(){
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
 

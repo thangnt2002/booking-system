@@ -3,73 +3,73 @@ package com.booking.keycloakprofileservice.controllers;
 import com.booking.keycloakprofileservice.dto.ApiResponse;
 import com.booking.keycloakprofileservice.dto.requests.UserRequest;
 import com.booking.keycloakprofileservice.dto.responses.UserResponse;
-import com.booking.keycloakprofileservice.entities.User;
 import com.booking.keycloakprofileservice.mapper.UserMapper;
 import com.booking.keycloakprofileservice.services.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+/*
+ * Handler methods must be public: @PreAuthorize makes this bean a CGLIB proxy, and a private
+ * method invoked on the proxy runs without the injected fields (NPE) and without the security check.
+ */
 @RestController
 @RequestMapping("/profiles")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class UserProfileController
-{
-    UserService userService;
+public class UserProfileController {
 
+    UserService userService;
     UserMapper userMapper;
 
-
-    @PostMapping()
-    private ApiResponse<UserResponse> create(@RequestBody UserRequest request){
-        User profile = userService.create(request);
-        return ApiResponse.<UserResponse>builder()
-                .success(true)
-                .code(201)
-                .data(userMapper.toUserResponse(profile))
-                .build();
+    /** Public self sign-up (whitelisted in common SecurityConfiguration). Always gets role USER. */
+    @PostMapping("/registrations")
+    public ResponseEntity<ApiResponse<UserResponse>> register(@RequestBody UserRequest request) {
+        return created(userMapper.toUserResponse(userService.create(request)));
     }
 
+    /** Admin creates an account on behalf of someone. */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserResponse>> create(@RequestBody UserRequest request) {
+        return created(userMapper.toUserResponse(userService.create(request)));
+    }
+
+    /** Updates the caller's profile; an ADMIN may target another user via {@code userId} (Keycloak id). */
     @PutMapping
-    private ApiResponse<UserResponse> update(@RequestBody UserRequest request){
-        User profile = userService.update(request);
-        return ApiResponse.<UserResponse>builder()
-                .success(true)
-                .code(200)
-                .data(userMapper.toUserResponse(profile))
-                .build();
+    public ApiResponse<UserResponse> update(@RequestBody UserRequest request) {
+        return ok(userMapper.toUserResponse(userService.update(request)));
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<UserResponse> me() {
+        return ok(userMapper.toUserResponse(userService.getMyProfile()));
     }
 
     @GetMapping("/{id}")
-    private ApiResponse<UserResponse> findById(@PathVariable UUID id){
-        User user = userService.findById(id);
-        return ApiResponse.<UserResponse>builder()
-                .success(true)
-                .code(200)
-                .data(userMapper.toUserResponse(user))
-                .build();
+    public ApiResponse<UserResponse> findById(@PathVariable UUID id) {
+        return ok(userMapper.toUserResponse(userService.findById(id)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-     ApiResponse<List<UserResponse>> getAll(){
+    public ApiResponse<List<UserResponse>> getAll() {
+        return ok(userService.getAll().stream().map(userMapper::toUserResponse).toList());
+    }
 
-        List<UserResponse> response =
-                userService.getAll()
-                .stream()
-                .map(userMapper::toUserResponse)
-                .toList();
+    private static <T> ApiResponse<T> ok(T data) {
+        return ApiResponse.<T>builder().success(true).code(200).data(data).build();
+    }
 
-        return ApiResponse.<List<UserResponse>>builder()
-                .success(true)
-                .code(200)
-                .data(response)
-                .build();
+    private static <T> ResponseEntity<ApiResponse<T>> created(T data) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.<T>builder().success(true).code(201).data(data).build());
     }
 }

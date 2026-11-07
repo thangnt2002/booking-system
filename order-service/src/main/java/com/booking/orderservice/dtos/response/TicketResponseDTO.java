@@ -16,6 +16,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TicketResponseDTO {
+    String id;
     String eventId;
 
     TicketStatus status;

@@ -8,65 +8,111 @@ spring:
   application:
     name: booking-order-service
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=order-service;encrypt=true;trustServerCertificate=true;
-    username: sa
-    password: Thmt20021001.
+    url: ${ORDER_DB_URL:jdbc:sqlserver://localhost:1433;databaseName=order-service;encrypt=true;trustServerCertificate=true;}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:30}
+      minimum-idle: 10
+      connection-timeout: 3000
 
   jpa:
-    show-sql: true
+    open-in-view: false
+    show-sql: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6319}
+      password: ${REDIS_PASSWORD:}
+      timeout: 500ms
+      lettuce:
+        pool:
+          max-active: 64
+          max-idle: 16
+          min-idle: 8
 
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
       properties:
-        spring.json.add.type.headers: true
-        spring.json.type.mapping: ticketStockMsg:com.booking.orderservice.event.TicketStockEvent, orderMsg:com.booking.orderservice.entities.Order
-
+        enable.idempotence: true
+        linger.ms: 5
+        request.timeout.ms: 15000
+        # must be >= linger.ms + request.timeout.ms
+        delivery.timeout.ms: 30000
     consumer:
-      group-id: order-group
+      group-id: order-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      isolation-level: read_committed
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+      concurrency: 3
 
-      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-
-      properties:
-        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.trusted.packages: "*"
-        spring.json.use.type.headers: true
-        spring.json.type.mapping: "ticketStockMsg:com.booking.orderservice.event.TicketStockEvent, orderMsg:com.booking.orderservice.entities.Order"
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 500
+            read-timeout: 2000
 
   security:
     keycloak:
-      base-url: http://localhost:9999
+      base-url: ${KEYCLOAK_URL:http://localhost:9999}
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 
 keycloak:
-  auth-server-url: http://localhost:9999
+  auth-server-url: ${KEYCLOAK_URL:http://localhost:9999}
   realm: master
   client-id: admin-cli
   principal-attribute: preferred_username
   bearer-only: true
   admin:
-    username: admin
-    password: bitnami123
+    username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD}
 
 app:
   security:
-    cursor-secret-key: mwjzowfpyvrkgjax
+    cursor-secret-key: ${CURSOR_SECRET_KEY}
   internal:
-    key: key
+    key: ${APP_INTERNAL_KEY}
 
   profile:
-    event: http://localhost:8084/event
+    event: ${EVENT_SERVICE_URL:http://localhost:8084/event}
+
+  messaging:
+    enabled: true
+    partitions: 6
+    replicas: 1
+
+  outbox:
+    poll-interval-ms: 200
+    batch-size: 200
+
+  order:
+    payment-timeout: 15m
+    redis-hold-ttl: 24h
+    max-quantity-per-order: 10
+    expiry-batch-size: 200
+    expiry-scan-interval-ms: 15000
+    ticket-cache-ttl: 2s

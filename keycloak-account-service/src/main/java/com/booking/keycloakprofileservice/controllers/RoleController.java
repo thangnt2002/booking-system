@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +26,9 @@ public class RoleController {
     RoleService roleService;
     RoleMapper roleMapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    private ResponseEntity<ApiResponse<RoleResponse>> create(@RequestBody RoleCreationRequest request) {
+    public ResponseEntity<ApiResponse<RoleResponse>> create(@RequestBody RoleCreationRequest request) {
         Role role = roleService.create(request);
 
         ApiResponse<RoleResponse> body = ApiResponse.<RoleResponse>builder()
@@ -38,7 +40,7 @@ public class RoleController {
     }
 
     @GetMapping
-    private ApiResponse<List<RoleResponse>> getAll() {
+    public ApiResponse<List<RoleResponse>> getAll() {
         List<RoleResponse> responses =
                 roleService.getAll()
                         .stream()
@@ -51,8 +53,9 @@ public class RoleController {
                 .build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    private ApiResponse<Void> delete(@PathVariable UUID id) {
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
         roleService.delete(id);
         return ApiResponse.<Void>builder()
                 .success(true)

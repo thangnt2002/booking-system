@@ -12,10 +12,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +77,12 @@ public class TicketCacheService {
         try {
             boolean isLock = locker.tryLock(1, 5, TimeUnit.SECONDS);
             if (!isLock) {
-                return null;
+                // another instance is rebuilding the entry: use its result, or read through
+                // without caching instead of reporting a missing ticket
+                TicketCache rebuilt = redisInfraService.getObject(redisKey, TicketCache.class);
+                return rebuilt != null ? rebuilt : ticketRepository.findById(ticketId)
+                        .map(ticket -> new TicketCache().withClone(ticket).withVersion(System.currentTimeMillis()))
+                        .orElse(null);
             }
 
             TicketCache ticketCache = redisInfraService.getObject(redisKey, TicketCache.class);
@@ -107,35 +110,4 @@ public class TicketCacheService {
             locker.unlock();
         }
     }
-
-
-    public int decreaseStock(UUID ticketId, int quantity) {
-        String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
-        String luaScript = "local stock = redis.call('GET', KEYS[1]);" +
-                "if stock == false then return -1 end; " +
-                "stock = tonumber(stock); " +
-                "if (stock >= tonumber(ARGV[1])) then " +
-                "   redis.call('SET', KEYS[1], stock - tonumber(ARGV[1]));" +
-                "   return 1;" +
-                "end;" +
-                "return 0";
-        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(luaScript, Long.class);
-        Long result = redisInfraService.getRedisTemplate().execute(redisScript, Collections.singletonList(stockAvailableCacheKey), String.valueOf(quantity));
-        return result != null ? result.intValue() : 0;
-    }
-
-    public boolean increaseStock(UUID ticketId, int quantity) {
-        String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
-        String luaScript = "local stock = redis.call('GET', [KEYS]); " +
-                "if (stock) then " +
-                " redis.call('SET', KEY[1], stock + tonumber(ARGV[1]));" +
-                " return 1;" +
-                "end;" +
-                "return 0";
-        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(luaScript, Long.class);
-        Long result = redisInfraService.getRedisTemplate().execute(redisScript, Collections.singletonList(stockAvailableCacheKey), quantity);
-        return result != null && result.intValue() == 1;
-    }
-
-
 }

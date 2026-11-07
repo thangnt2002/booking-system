@@ -1,0 +1,60 @@
+<header class="topbar">
+  <div class="topbar-inner">
+    <a routerLink="/" class="logo">🎫 <span>Booking</span>Ticket <small class="kc">Keycloak</small></a>
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Sự kiện</a>
+      <a routerLink="/orders" routerLinkActive="active">Vé của tôi</a>
+      <a routerLink="/account" routerLinkActive="active">Tài khoản</a>
+      <a routerLink="/admin" routerLinkActive="active">Quản trị</a>
+      <a routerLink="/settings" routerLinkActive="active">Cài đặt</a>
+    </nav>
+    <div class="spacer"></div>
+    <span class="mode" title="API mode">{{ cfg.mode() === 'gateway' ? 'Gateway :8888' : 'Direct' }}</span>
+    @if (auth.isLoggedIn()) {
+      <span class="user">{{ auth.displayName() | slice: 0 : 18 }}</span>
+      <button class="btn sm" (click)="logout()">Đăng xuất</button>
+    } @else {
+      <a class="btn sm ghost-light" routerLink="/login">Đăng nhập</a>
+      <a class="btn sm" routerLink="/register">Đăng ký</a>
+    }
+  </div>
+</header>
+
+<main>
+  <router-outlet />
+</main>
+
+<button class="log-toggle" (click)="showLog.set(!showLog())">
+  API log ({{ log.entries().length }})
+</button>
+
+@if (showLog()) {
+  <aside class="log-panel">
+    <div class="row log-head">
+      <strong>API log</strong>
+      <div class="spacer"></div>
+      <button class="btn sm ghost" (click)="log.clear()">Xoá</button>
+      <button class="btn sm ghost" (click)="showLog.set(false)">✕</button>
+    </div>
+    <div class="log-list">
+      @for (e of log.entries(); track e.id) {
+        <div class="log-item" (click)="toggle(e.id)">
+          <span class="m">{{ e.method }}</span>
+          <span class="s" [class.bad]="e.status === 0 || e.status >= 400">{{ e.status }}</span>
+          <span class="u">{{ e.url }}</span>
+          <span class="t">{{ e.ms }}ms</span>
+        </div>
+        @if (openEntry() === e.id) {
+          @if (e.request) {
+            <div class="muted">Request</div>
+            <pre class="json">{{ e.request | json }}</pre>
+          }
+          <div class="muted">Response</div>
+          <pre class="json">{{ e.response | json }}</pre>
+        }
+      } @empty {
+        <p class="muted">Chưa có request nào.</p>
+      }
+    </div>
+  </aside>
+}

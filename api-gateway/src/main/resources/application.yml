@@ -9,6 +9,13 @@ app:
     notification: http://localhost:8083
     event: http://localhost:8084
     order: http://localhost:8085
+    keycloak-profile: http://localhost:8082
+  # keycloak: verify Keycloak JWTs locally (default) | identity: introspect via identity-service
+  auth:
+    provider: keycloak
+  keycloak:
+    base-url: ${KEYCLOAK_URL:http://localhost:9999}
+    realm: booking_system_realm
 
 
 logging:

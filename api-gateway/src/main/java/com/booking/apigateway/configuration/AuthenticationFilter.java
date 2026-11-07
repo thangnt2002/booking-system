@@ -1,7 +1,7 @@
 package com.booking.apigateway.configuration;
 
 import com.booking.apigateway.dto.ApiResponse;
-import com.booking.apigateway.service.IdentityService;
+import com.booking.apigateway.service.TokenVerifier;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ import java.util.List;
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     ObjectMapper objectMapper;
-    IdentityService identityService;
+    TokenVerifier tokenVerifier;
 
     @NonFinal
     @Value("${app.api-prefix}")
@@ -44,6 +44,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     @NonFinal
     String[] publicEndpoints = {"/identity/auth/login",
             "/identity/users/registrations",
+            "/keycloak-profile/profiles/registrations",
             "/notification/email/send",
             "/event/events/list"
     };
@@ -59,12 +60,9 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             return unAuthenticate(exchange.getResponse());
         }
         String token = authHeader.getFirst().replace("Bearer ", "");
-        return identityService.introspectToken(token).flatMap(introspectResponse -> {
-            if (introspectResponse.getData().isValid())
-                return chain.filter(exchange);
-            else
-                return unAuthenticate(exchange.getResponse());
-        }).onErrorResume(throwable -> unAuthenticate(exchange.getResponse()));
+        return tokenVerifier.isValid(token)
+                .onErrorReturn(false)
+                .flatMap(valid -> valid ? chain.filter(exchange) : unAuthenticate(exchange.getResponse()));
     }
 
     private boolean isPublicEndpoint(ServerHttpRequest request){

@@ -46,8 +46,16 @@ public class BaseModel {
         this.updatedDate = Instant.now();
     }
 
+    // builders bypass the custom setters above, so audit timestamps are enforced here
     @PrePersist
     public void prePersist() {
+        Instant now = Instant.now();
+        if (this.createdDate == null) {
+            this.createdDate = now;
+        }
+        if (this.updatedDate == null) {
+            this.updatedDate = now;
+        }
         if (this.isDeleted == null) {
             this.isDeleted = false;
         }
@@ -55,6 +63,7 @@ public class BaseModel {
 
     @PreUpdate
     public void preUpdate() {
+        this.updatedDate = Instant.now();
         if (this.isDeleted == null) {
             this.isDeleted = false;
         }

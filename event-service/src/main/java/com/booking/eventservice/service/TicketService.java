@@ -18,12 +18,10 @@ public interface TicketService {
 
     TicketResponseDTO findTicketById(UUID ticketId, Long version);
 
-    boolean reserveStock(UUID ticketId, int quantity);
-
-    boolean releaseStock(UUID ticketId, int quantity);
-
-    boolean decreaseStock(UUID ticketId, int quantity);
-
-    boolean warmCache(UUID ticketId);
+    /**
+     * Seeds the Redis available-stock counter from the database with SET NX, so it can
+     * never overwrite (and thereby inflate) a counter that is already being decremented.
+     */
+    boolean warmStock(UUID ticketId);
 
 }

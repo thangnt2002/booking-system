@@ -10,6 +10,9 @@ public interface RedisInfraService {
 
     <T> T getObject(String key, Class<T> targetClass);
 
+    /** SET key value NX: never overwrites a live value. Returns true if the key was written. */
+    boolean setIfAbsent(String key, String value);
+
     void delete(String key);
 
     void setInt(String key, int value);

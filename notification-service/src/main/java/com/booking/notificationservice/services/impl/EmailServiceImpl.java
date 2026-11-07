@@ -37,9 +37,11 @@ public class EmailServiceImpl implements EmailService {
                 .htmlContent(request.getHtmlContent())
                 .build();
         try {
-            EmailResponse emailResponse;
-            emailResponse = emailClient.sendEmail(apiKey, emailBody);
-            return emailResponse.getMessageId();
+//            EmailResponse emailResponse;
+//            emailResponse = emailClient.sendEmail(apiKey, emailBody);
+//            return emailResponse.getMessageId();
+            log.info("Sending email..........");
+            return null;
         } catch (Exception e) {
             log.error(e.getMessage());
         }

@@ -5,13 +5,16 @@ import com.booking.common.dtos.ApiResponse;
 import com.booking.orderservice.dtos.response.TicketResponseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.UUID;
 
+/**
+ * Read-only access to event-service. Stock is never mutated over HTTP: it flows through
+ * Kafka events so it survives restarts and retries without double counting.
+ */
 @FeignClient(name = "event-service",
         url = "${app.profile.event}",
         configuration = {ClientAuthenRequestInterceptor.class}
@@ -21,15 +24,7 @@ public interface EventClient {
     @GetMapping(value = "/internal/tickets/{ticketId}", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<TicketResponseDTO> findTicketById(@PathVariable("ticketId") UUID ticketId);
 
-    @PostMapping(value = "/internal/tickets/{ticketId}/{quantity}/release", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<Boolean> releaseStock(@PathVariable("ticketId") UUID ticketId, @PathVariable("quantity") int quantity);
-
-    @PostMapping(value = "/internal/tickets/{ticketId}/{quantity}/reserve", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<Boolean> reserveStock(@PathVariable("ticketId") UUID ticketId, @PathVariable("quantity") int quantity);
-
-    @PostMapping(value = "/internal/tickets/{ticketId}/{quantity}/decrease", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<Boolean> decreaseStock(@PathVariable("ticketId") String ticketId, @PathVariable("quantity") int quantity);
-
+    /** Loads the available-stock counter into Redis with SET NX (never overwrites a live counter). */
     @PostMapping(value = "/internal/tickets/{ticketId}/warm-cache", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<ApiResponse<Boolean>> warmCache(@PathVariable("ticketId") UUID ticketId);
+    ApiResponse<Boolean> warmStock(@PathVariable("ticketId") UUID ticketId);
 }

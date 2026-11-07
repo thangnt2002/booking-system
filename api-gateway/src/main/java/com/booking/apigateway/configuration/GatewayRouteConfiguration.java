@@ -27,6 +27,9 @@ public class GatewayRouteConfiguration {
     @Value("${app.service.order}")
     String orderHost;
 
+    @Value("${app.service.keycloak-profile}")
+    String keycloakProfileHost;
+
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
@@ -45,6 +48,9 @@ public class GatewayRouteConfiguration {
                 .route("order_service", r -> r.path(apiPrefix+"/order/**")
                         .filters(f -> f.stripPrefix(2))
                         .uri(orderHost))
+                .route("keycloak_profile_service", r -> r.path(apiPrefix+"/keycloak-profile/**")
+                        .filters(f -> f.stripPrefix(2))
+                        .uri(keycloakProfileHost))
                 .build();
     }
 }

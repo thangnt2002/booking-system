@@ -44,8 +44,6 @@ public class RedisInfraServiceImpl implements RedisInfraService {
         if(jsonValue == null){
             return null;
         }
-        log.info("Type={}", jsonValue.getClass());
-        log.info("Value={}", jsonValue);
         try {
             return objectMapper.readValue(jsonValue.toString(), targetClass);
         } catch (IllegalArgumentException e) {
@@ -55,6 +53,11 @@ public class RedisInfraServiceImpl implements RedisInfraService {
             log.error("Error server for object: {} for key: {}", e, key);
             return null;
         }
+    }
+
+    @Override
+    public boolean setIfAbsent(String key, String value) {
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key, value));
     }
 
     @Override

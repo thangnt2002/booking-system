@@ -1,0 +1,38 @@
+.topbar { background: var(--c-header); color: var(--c-header-text); position: sticky; top: 0; z-index: 10; }
+.topbar-inner {
+  max-width: 1200px; margin: 0 auto; padding: 12px 16px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.logo { color: #fff; font-weight: 700; font-size: 20px; letter-spacing: -.01em; }
+.logo span { color: var(--c-primary); }
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+nav a { color: rgba(255,255,255,.75); padding: 6px 12px; border-radius: 999px; font-weight: 500; font-size: 14px; }
+nav a:hover { color: #fff; }
+nav a.active { color: #fff; background: rgba(255,255,255,.12); }
+.mode { font-size: 12px; padding: 3px 10px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; color: rgba(255,255,255,.8); }
+.user { font-size: 14px; color: rgba(255,255,255,.9); }
+.ghost-light { background: transparent; border-color: rgba(255,255,255,.35); }
+.ghost-light:hover { background: rgba(255,255,255,.1); }
+
+.log-toggle {
+  position: fixed; right: 16px; bottom: 16px; z-index: 20;
+  background: var(--c-header); color: #fff; border: 0; border-radius: 999px;
+  padding: 10px 16px; font: 600 13px var(--font); cursor: pointer; box-shadow: var(--shadow-hover);
+}
+.log-panel {
+  position: fixed; right: 0; top: 0; bottom: 0; width: min(560px, 100vw); z-index: 30;
+  background: var(--c-surface); border-left: 1px solid var(--c-border); box-shadow: var(--shadow-hover);
+  display: flex; flex-direction: column;
+}
+.log-head { padding: 12px 16px; border-bottom: 1px solid var(--c-border); }
+.log-list { overflow: auto; padding: 8px 16px 60px; }
+.log-item {
+  display: grid; grid-template-columns: 56px 40px 1fr auto; gap: 8px; padding: 8px 0;
+  border-bottom: 1px solid var(--c-border); font: 12px var(--mono); cursor: pointer;
+}
+.log-item .m { font-weight: 700; }
+.log-item .s { color: var(--c-success); font-weight: 700; }
+.log-item .s.bad { color: var(--c-danger); }
+.log-item .u { word-break: break-all; }
+.log-item .t { color: var(--c-muted); }
+.kc { font-size: 11px; font-weight: 600; padding: 2px 8px; margin-left: 6px; border-radius: 999px; background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); vertical-align: middle; }

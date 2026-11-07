@@ -13,8 +13,6 @@ import com.booking.eventservice.mapper.TicketMapper;
 import com.booking.eventservice.repository.EventRepository;
 import com.booking.eventservice.repository.TicketRepository;
 import com.booking.eventservice.service.TicketService;
-import jakarta.persistence.LockTimeoutException;
-import jakarta.persistence.PessimisticLockException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
-import static com.booking.common.utils.CacheKeyUtils.genDistributedTicketStockAvailableKey;
+import static com.booking.common.utils.CacheKeyUtils.ticketStockKey;
 import static com.booking.common.utils.UserUtils.getCurrentUserId;
 
 
@@ -84,87 +82,27 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponseDTO findTicketById(UUID ticketId, Long version) {
         TicketCache ticketCache = getTicketFromCache(ticketId, version);
+        if (ticketCache == null || ticketCache.getTicket() == null) {
+            throw new NotFoundException(ErrorCode.DATA_NOT_FOUND);
+        }
         TicketResponseDTO dto = ticketMapper.toResponse(ticketCache.getTicket());
         dto.setVersion(ticketCache.getVersion());
         return dto;
     }
 
     @Override
-    @Transactional
-    public boolean reserveStock(UUID ticketId, int quantity) {
-        boolean isRedisDecremented = false;
-        try {
-            int deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
-            if (deductionResult == -1) {
-                log.info("decrease stock: cache miss for ticketId={}", ticketId);
-                warmCache(ticketId);
-                // decrease after add stock to cache
-                deductionResult = ticketCacheService.decreaseStock(ticketId, quantity);
-            }
-            if (deductionResult == 0) {
-                log.info("Redis stock insufficient for ticketId={}", ticketId);
-                return false;
-            }
-            isRedisDecremented = true;
-            log.info("DecreaseStock success for ticketId={}, quantity = {}", ticketId, quantity);
-            return true;
-        } catch (PessimisticLockException e) {
-            if (isRedisDecremented) {
-                ticketCacheService.increaseStock(ticketId, quantity);
-            }
-            log.error("PessimisticLockException ticketId={}, quantity = {}", ticketId, quantity);
-            return false;
-        } catch (LockTimeoutException e) {
-            if (isRedisDecremented) {
-                ticketCacheService.increaseStock(ticketId, quantity);
-            }
-            log.error("LockTimeoutException ticketId={}, quantity = {}", ticketId, quantity);
-            return false;
-        } catch (Exception e) {
-            if (isRedisDecremented) {
-                ticketCacheService.increaseStock(ticketId, quantity);
-            }
-            log.error("Exception ticketId={}, quantity = {}", ticketId, quantity);
-            return false;
-        }
-    }
-
-    @Override
-    public boolean warmCache(UUID ticketId) {
+    public boolean warmStock(UUID ticketId) {
         if (ticketId == null) {
             return false;
         }
-        TicketCache cached = ticketCacheService.getTicket(ticketId, null);
-        if (cached == null || cached.isNullObject()) {
-            return false;
-        }
-        log.info("Warming cache for ticket = {}", ticketId);
-        Ticket ticket = cached.getTicket();
-        String stockAvailableCacheKey = genDistributedTicketStockAvailableKey(ticketId);
-        redisInfraService.setObject(stockAvailableCacheKey, ticket.getStockAvailable());
-        return true;
-    }
-
-    @Override
-    @Transactional
-    public boolean decreaseStock(UUID ticketId, int quantity) {
-        int isDbDecremented = ticketRepository.reservedStock(ticketId, quantity);
-
-        try {
-            if (isDbDecremented > 0) {
-                return true;
-            }
-            log.info("DecreaseStock failed for ticketId={}, quantity = {}", ticketId, quantity);
-            return false;
-        } catch (Exception e) {
-            log.error("decreaseStock err. Id = {}, quantity = {}, err= {}.", ticketId, quantity, e.getMessage());
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public boolean releaseStock(UUID ticketId, int quantity) {
-        return ticketCacheService.increaseStock(ticketId, quantity);
+        // read the live DB value: the cached Ticket object can be minutes old
+        return ticketRepository.findStockAvailable(ticketId)
+                .map(available -> {
+                    boolean written = redisInfraService.setIfAbsent(ticketStockKey(ticketId), String.valueOf(available));
+                    log.info("Warm stock ticket={} available={} written={}", ticketId, available, written);
+                    return true;
+                })
+                .orElse(false);
     }
 
     private TicketCache getTicketFromCache(UUID id, Long version) {

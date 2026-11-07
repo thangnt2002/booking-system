@@ -15,7 +15,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: true
-        spring.json.type.mapping: revertAccountMsg:com.booking.profileservice.event.ProfileRevertEvent,notificationMsg:com.booking.profileservice.event.NotificationEvent
+        spring.json.type.mapping: revertAccountMsg:com.booking.keycloakprofileservice.event.ProfileRevertEvent,notificationMsg:com.booking.keycloakprofileservice.event.NotificationEvent
 
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=keycloak-profile-service;encrypt=true;trustServerCertificate=true;

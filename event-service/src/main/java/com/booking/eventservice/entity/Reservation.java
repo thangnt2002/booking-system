@@ -1,6 +1,6 @@
 package com.booking.eventservice.entity;
 
-import com.booking.eventservice.enums.CancelReason;
+import com.booking.common.events.CancelReason;
 import com.booking.eventservice.enums.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +17,10 @@ import java.util.UUID;
 @SuperBuilder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "reservations")
+// one reservation per order: the unique key makes OrderPlaced processing idempotent at the DB level
+@Table(name = "reservations",
+        uniqueConstraints = @UniqueConstraint(name = "uq_reservations_order", columnNames = "order_id"),
+        indexes = @Index(name = "ix_reservations_ticket_status", columnList = "ticket_id, status"))
 public class Reservation extends BaseModel {
 
     @Id

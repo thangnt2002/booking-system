@@ -21,9 +21,9 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         (
             (:createdAt IS NULL OR :id IS NULL)
             OR
-            (e.created_at < :createdAt OR (e.created_at = :createdAt AND e.id < :id))
+            (e.created_date < :createdAt OR (e.created_date = :createdAt AND e.id < :id))
         )
-    ORDER BY e.created_at DESC, e.id DESC
+    ORDER BY e.created_date DESC, e.id DESC
     """, nativeQuery = true)
     List<Event> findCursorPage(
             @Param("id") String id,

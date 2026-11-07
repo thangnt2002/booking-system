@@ -26,13 +26,14 @@ public class NotificationConsumer {
     @KafkaListener(topics = TOPIC_USER_OB)
     public void listenNotificationDelivery(NotificationMsg message) {
         log.info("Message received: {}", message);
-        emailService.sendEmail(SendEmail.builder()
-                .to(List.of(Recipient.builder()
-                        .email(message.getRecipient())
-                        .name("Recipient name")
-                        .build()))
-                .subject(message.getSubject())
-                .htmlContent(message.getBody())
-                .build());
+        log.info("Sending email..........");
+//        emailService.sendEmail(SendEmail.builder()
+//                .to(List.of(Recipient.builder()
+//                        .email(message.getRecipient())
+//                        .name("Recipient name")
+//                        .build()))
+//                .subject(message.getSubject())
+//                .htmlContent(message.getBody())
+//                .build());
     }
 }
